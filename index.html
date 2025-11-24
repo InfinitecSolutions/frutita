@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRUTITA - Tu tienda de frutas y verduras</title>
+    <style>
+        /* Estilos generales y reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Variables de colores */
+        :root {
+            --primary-green: #4CAF50;
+            --light-green: #8BC34A;
+            --yellow: #FFC107;
+            --orange: #FF9800;
+            --white: #FFFFFF;
+            --gray: #757575;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --error-red: #f44336;
+            --error-light: #ffebee;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+            color: var(--white);
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "🍓";
+            margin-right: 0.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .cart-button {
+            background-color: var(--white);
+            color: var(--primary-green);
+            border: none;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .cart-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .cart-button::before {
+            content: "🛒";
+            margin-right: 0.5rem;
+        }
+        
+        .cart-count {
+            background-color: var(--orange);
+            color: var(--white);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        
+        /* Contenedor principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        /* Hero section */
+        .hero {
+            background: linear-gradient(135deg, var(--yellow), var(--orange));
+            color: var(--white);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+        }
+        
+        /* Filtros de categoría - Fijos */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            position: sticky;
+            top: 70px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            z-index: 90;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-filter {
+            background-color: var(--white);
+            border: 2px solid var(--light-green);
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .category-filter:hover {
+            background-color: var(--light-gray);
+        }
+        
+        .category-filter.active {
+            background-color: var(--light-green);
+            color: var(--white);
+        }
+        
+        /* Catálogo de productos - Vista optimizada */
+        .catalog {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .product-item {
+            background-color: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            display: flex;
+            width: 100%;
+            padding: 0.8rem;
+            align-items: center;
+        }
+        
+        .product-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 1rem;
+        }
+        
+        .product-info {
+            flex-grow: 1;
+        }
+        
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            color: var(--dark-gray);
+        }
+        
+        .product-category {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.3rem;
+        }
+        
+        .product-prices {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .price {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .price-label {
+            font-size: 0.7rem;
+            color: var(--gray);
+        }
+        
+        .price-value {
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+        
+        .product-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        
+        .product-options {
+            display: flex;
+        }
+        
+        .unit-option {
+            padding: 0.2rem 0.5rem;
+            border: 1px solid var(--light-gray);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .unit-option:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .unit-option:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .unit-option.selected {
+            background-color: var(--light-green);
+            color: var(--white);
+            border-color: var(--light-green);
+        }
+        
+        .add-to-cart {
+            background-color: var(--primary-green);
+            color: var(--white);
+            border: none;
+            border-radius: 20px;
+            padding: 0.4rem 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .add-to-cart:hover {
+            background-color: var(--light-green);
+        }
+        
+        /* Notificación temporal */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-green);
+            color: var(--white);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.error {
+            background-color: var(--error-red);
+        }
+        
+        .notification::before {
+            content: "✓";
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .notification.error::before {
+            content: "⚠";
+        }
+        
+        /* Carrito de compras */
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: flex-end;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+        }
+        
+        .cart-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .cart {
+            background-color: var(--white);
+            width: 90%;
+            max-width: 400px;
+            height: 100%;
+            overflow-y: auto;
+            padding: 1.5rem;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+        
+        .cart-overlay.active .cart {
+            transform: translateX(0);
+        }
+        
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-gray);
+        }
+        
+        .cart-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark-gray);
+        }
+        
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .cart-items {
+            margin-bottom: 1.5rem;
+        }
+        
+        .cart-item {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .cart-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cart-item-name {
+            font-weight: bold;
+            color: var(--dark-gray);
+        }
+        
+        .cart-item-remove {
+            background: none;
+            border: none;
+            color: var(--orange);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .cart-item-details {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            margin-right: 1rem;
+        }
+        
+        .quantity-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--light-green);
+            color: var(--white);
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .quantity-btn:hover {
+            background-color: var(--primary-green);
+        }
+        
+        .quantity-value {
+            margin: 0 0.5rem;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .unit-selector {
+            display: flex;
+            margin-right: 1rem;
+        }
+        
+        .unit-option {
+            padding: 0.2rem 0.5rem;
+            border: 1px solid var(--light-gray);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .unit-option:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .unit-option:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .unit-option.selected {
+            background-color: var(--light-green);
+            color: var(--white);
+            border-color: var(--light-green);
+        }
+        
+        .cart-item-price {
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+        
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--light-gray);
+        }
+        
+        .clear-cart {
+            background-color: var(--orange);
+            color: var(--white);
+            border: none;
+            border-radius: 25px;
+            padding: 0.6rem;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 1rem;
+        }
+        
+        .clear-cart:hover {
+            background-color: #F57C00;
+        }
+        
+        .checkout-form {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .form-group.error label {
+            color: var(--error-red);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        
+        .form-group.error input,
+        .form-group.error textarea {
+            border-color: var(--error-red);
+            background-color: var(--error-light);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .location-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .location-input input {
+            flex-grow: 1;
+        }
+        
+        .location-button {
+            background-color: var(--primary-green);
+            color: var(--white);
+            border: none;
+            border-radius: 5px;
+            padding: 0 0.8rem;
+            cursor: pointer;
+        }
+        
+        .payment-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-option {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .payment-option.selected {
+            background-color: var(--light-green);
+            color: var(--white);
+            border-color: var(--light-green);
+        }
+        
+        .order-status {
+            padding: 0.5rem;
+            background-color: var(--light-gray);
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        
+        .order-date {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .checkout-button {
+            background-color: var(--orange);
+            color: var(--white);
+            border: none;
+            border-radius: 25px;
+            padding: 0.8rem;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .checkout-button:hover {
+            background-color: #F57C00;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--gray);
+        }
+        
+        .empty-cart::before {
+            content: "🛒";
+            display: block;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Modal de confirmación */
+        .confirmation-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+        }
+        
+        .confirmation-modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark-gray);
+        }
+        
+        .modal-text {
+            margin-bottom: 1.5rem;
+            color: var(--gray);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .modal-button {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .modal-confirm {
+            background-color: var(--orange);
+            color: var(--white);
+        }
+        
+        .modal-confirm:hover {
+            background-color: #F57C00;
+        }
+        
+        .modal-cancel {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+        }
+        
+        .modal-cancel:hover {
+            background-color: #e0e0e0;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark-gray);
+            color: var(--white);
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+        }
+        
+        footer a {
+            color: var(--light-green);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Estilos para el formulario de dirección mejorado */
+        .address-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .address-form .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .map-container {
+            margin-top: 0.5rem;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 150px;
+            display: none;
+        }
+        
+        .map-container.active {
+            display: block;
+        }
+        
+        .map-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Mensaje de error */
+        .error-message {
+            color: var(--error-red);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .form-group.error .error-message {
+            display: block;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .product-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .product-image {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+            
+            .product-actions {
+                flex-direction: row;
+                align-items: center;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .address-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .address-form .form-group.full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">FRUTITA</div>
+        <button class="cart-button" id="cartButton">
+            Mi Carrito
+            <span class="cart-count" id="cartCount">0</span>
+        </button>
+    </header>
+    
+    <div class="container">
+        <section class="hero">
+            <h1>¡Frutas y verduras frescas directamente a tu puerta!</h1>
+            <p>Los productos más frescos de la región, seleccionados especialmente para ti</p>
+        </section>
+        
+        <section class="category-filters" id="categoryFilters">
+            <button class="category-filter active" data-category="all">Todos</button>
+            <button class="category-filter" data-category="Fruta">Frutas</button>
+            <button class="category-filter" data-category="Hortaliza">Hortalizas</button>
+            <button class="category-filter" data-category="Hierba">Hierbas</button>
+            <button class="category-filter" data-category="Raíz">Raíces</button>
+            <button class="category-filter" data-category="Otro">Otros</button>
+        </section>
+        
+        <section class="catalog" id="productCatalog">
+            <!-- Los productos se generarán dinámicamente con JavaScript -->
+        </section>
+    </div>
+    
+    <div class="cart-overlay" id="cartOverlay">
+        <div class="cart">
+            <div class="cart-header">
+                <h2 class="cart-title">Mi Carrito</h2>
+                <button class="close-cart" id="closeCart">&times;</button>
+            </div>
+            
+            <div class="cart-items" id="cartItems">
+                <!-- Los items del carrito se generarán dinámicamente -->
+            </div>
+            
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">$0.00</span>
+            </div>
+            
+            <button class="clear-cart" id="clearCart">Vaciar carrito</button>
+            
+            <div class="checkout-form">
+                <div class="form-group" id="nameGroup">
+                    <label for="customerName">Nombre completo:</label>
+                    <input type="text" id="customerName" placeholder="Ingresa tu nombre completo">
+                    <span class="error-message">Este campo es obligatorio</span>
+                </div>
+                
+                <div class="form-group" id="phoneGroup">
+                    <label for="customerPhone">Número de teléfono:</label>
+                    <input type="tel" id="customerPhone" placeholder="Ingresa tu número de teléfono">
+                    <span class="error-message">Este campo es obligatorio</span>
+                </div>
+                
+                <div class="form-group" id="addressGroup">
+                    <label>Dirección de envío:</label>
+                    <div class="address-form">
+                        <div class="form-group" id="streetGroup">
+                            <input type="text" id="street" placeholder="Calle">
+                            <span class="error-message">Campo obligatorio</span>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="extNumber" placeholder="Número exterior">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="intNumber" placeholder="Número interior">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="neighborhood" placeholder="Colonia">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="city" placeholder="Ciudad">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="state" placeholder="Estado">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="zipCode" placeholder="Código postal">
+                        </div>
+                        <div class="form-group full-width">
+                            <div class="location-input">
+                                <input type="text" id="fullAddress" placeholder="Dirección completa">
+                                <button class="location-button" id="locationButton">📍</button>
+                            </div>
+                            <span class="error-message">Debes ingresar al menos la calle o la dirección completa</span>
+                        </div>
+                    </div>
+                    <div class="map-container" id="mapContainer">
+                        <iframe class="map-iframe" id="mapIframe" src="" allowfullscreen></iframe>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Método de pago:</label>
+                    <div class="payment-options">
+                        <div class="payment-option selected" data-payment="transferencia">Transferencia</div>
+                        <div class="payment-option" data-payment="efectivo">Efectivo</div>
+                    </div>
+                </div>
+                
+                <div class="order-status">
+                    Estatus del pedido: <span id="orderStatus">Pendiente</span>
+                </div>
+                
+                <div class="order-date" id="orderDate">
+                    <!-- La fecha se generará dinámicamente -->
+                </div>
+            </div>
+            
+            <button class="checkout-button" id="checkoutButton">Confirmar pedido</button>
+        </div>
+    </div>
+    
+    <!-- Modal de confirmación para vaciar carrito -->
+    <div class="confirmation-modal" id="confirmationModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Vaciar carrito</h3>
+            <p class="modal-text">¿Estás seguro de que quieres vaciar tu carrito? Esta acción no se puede deshacer.</p>
+            <div class="modal-buttons">
+                <button class="modal-button modal-cancel" id="modalCancel">Cancelar</button>
+                <button class="modal-button modal-confirm" id="modalConfirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notificación temporal -->
+    <div class="notification" id="notification">
+        Producto agregado al carrito
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 FRUTITA - Todos los derechos reservados</p>
+        <p>Diseñado por <a href="https://www.infinitecsolutions.com" target="_blank">Infinitec Solutions</a></p>
+    </footer>
+    
+    <script>
+        // Datos de productos con imágenes reales
+        const products = [
+            {
+                id: 1,
+                name: "Sandía",
+                category: "Fruta",
+                minPriceKg: 5,
+                maxPriceKg: 8,
+                minPriceBox: 120,
+                maxPriceBox: 180,
+                boxWeight: "20-25 kg",
+                image: "https://images.unsplash.com/photo-1581375321224-79da6fb8020a?w=200&h=200&fit=crop"
+            },
+            {
+                id: 2,
+                name: "Melón",
+                category: "Fruta",
+                minPriceKg: 8,
+                maxPriceKg: 12,
+                minPriceBox: 280,
+                maxPriceBox: 360,
+                boxWeight: "30-35 kg",
+                image: "https://images.unsplash.com/photo-1595405918218-36d232a8d079?w=200&h=200&fit=crop"
+            },
+            {
+                id: 3,
+                name: "Pepino",
+                category: "Hortaliza",
+                minPriceKg: 12,
+                maxPriceKg: 18,
+                minPriceBox: 150,
+                maxPriceBox: 200,
+                boxWeight: "25 kg",
+                image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?w=200&h=200&fit=crop"
+            },
+            {
+                id: 4,
+                name: "Jícama",
+                category: "Hortaliza",
+                minPriceKg: 20,
+                maxPriceKg: 30,
+                minPriceBox: 350,
+                maxPriceBox: 450,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1577234286642-fc512a5f8f11?w=200&h=200&fit=crop"
+            },
+            {
+                id: 5,
+                name: "Zanahoria",
+                category: "Hortaliza",
+                minPriceKg: 12,
+                maxPriceKg: 16,
+                minPriceBox: 180,
+                maxPriceBox: 220,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?w=200&h=200&fit=crop"
+            },
+            {
+                id: 6,
+                name: "Betabel",
+                category: "Hortaliza",
+                minPriceKg: 15,
+                maxPriceKg: 20,
+                minPriceBox: 220,
+                maxPriceBox: 260,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1595405921037-98699b42c00d?w=200&h=200&fit=crop"
+            },
+            {
+                id: 7,
+                name: "Guayaba",
+                category: "Fruta",
+                minPriceKg: 25,
+                maxPriceKg: 35,
+                minPriceBox: 180,
+                maxPriceBox: 250,
+                boxWeight: "10 kg",
+                image: "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=200&h=200&fit=crop"
+            },
+            {
+                id: 8,
+                name: "Naranja",
+                category: "Fruta",
+                minPriceKg: 10,
+                maxPriceKg: 14,
+                minPriceBox: 180,
+                maxPriceBox: 220,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop"
+            },
+            {
+                id: 9,
+                name: "Toronja",
+                category: "Fruta",
+                minPriceKg: 10,
+                maxPriceKg: 16,
+                minPriceBox: 180,
+                maxPriceBox: 230,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1581375321224-79da6fb8020a?w=200&h=200&fit=crop"
+            },
+            {
+                id: 10,
+                name: "Aguacate",
+                category: "Fruta",
+                minPriceKg: 45,
+                maxPriceKg: 70,
+                minPriceBox: 800,
+                maxPriceBox: 1200,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=200&h=200&fit=crop"
+            },
+            {
+                id: 11,
+                name: "Lechuga",
+                category: "Hortaliza",
+                minPriceKg: 12,
+                maxPriceKg: 20,
+                minPriceBox: 140,
+                maxPriceBox: 180,
+                boxWeight: "12 piezas",
+                image: "https://images.unsplash.com/photo-1568909344668-6f14a07b56a0?w=200&h=200&fit=crop"
+            },
+            {
+                id: 12,
+                name: "Hierbabuena",
+                category: "Hierba",
+                minPriceKg: 6,
+                maxPriceKg: 10,
+                minPriceBox: 120,
+                maxPriceBox: 160,
+                boxWeight: "20 manojos",
+                image: "https://images.unsplash.com/photo-1621898341751-39c5a369f35d?w=200&h=200&fit=crop"
+            },
+            {
+                id: 13,
+                name: "Apio",
+                category: "Hortaliza",
+                minPriceKg: 20,
+                maxPriceKg: 28,
+                minPriceBox: 120,
+                maxPriceBox: 160,
+                boxWeight: "8 kg en manojos",
+                image: "https://images.unsplash.com/photo-1572446947411-7a3a4e9b5b7c?w=200&h=200&fit=crop"
+            },
+            {
+                id: 14,
+                name: "Jengibre",
+                category: "Raíz",
+                minPriceKg: 60,
+                maxPriceKg: 90,
+                minPriceBox: 750,
+                maxPriceBox: 900,
+                boxWeight: "10 kg",
+                image: "https://images.unsplash.com/photo-1584203130898-56b4a9a0d6b3?w=200&h=200&fit=crop"
+            },
+            {
+                id: 15,
+                name: "Mandarina",
+                category: "Fruta",
+                minPriceKg: 12,
+                maxPriceKg: 18,
+                minPriceBox: 200,
+                maxPriceBox: 260,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop"
+            },
+            {
+                id: 16,
+                name: "Manzana",
+                category: "Fruta",
+                minPriceKg: 35,
+                maxPriceKg: 50,
+                minPriceBox: 900,
+                maxPriceBox: 1200,
+                boxWeight: "18-20 kg",
+                image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop"
+            },
+            {
+                id: 17,
+                name: "Uva",
+                category: "Fruta",
+                minPriceKg: 45,
+                maxPriceKg: 70,
+                minPriceBox: 300,
+                maxPriceBox: 400,
+                boxWeight: "8 kg",
+                image: "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=200&h=200&fit=crop"
+            },
+            {
+                id: 18,
+                name: "Pera",
+                category: "Fruta",
+                minPriceKg: 35,
+                maxPriceKg: 50,
+                minPriceBox: 500,
+                maxPriceBox: 650,
+                boxWeight: "18-20 kg",
+                image: "https://images.unsplash.com/photo-1514756331096-242fdeb70d4a?w=200&h=200&fit=crop"
+            },
+            {
+                id: 19,
+                name: "Tejocote",
+                category: "Fruta",
+                minPriceKg: 25,
+                maxPriceKg: 40,
+                minPriceBox: 450,
+                maxPriceBox: 550,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1546630392-36a4c2748258?w=200&h=200&fit=crop"
+            },
+            {
+                id: 20,
+                name: "Coco",
+                category: "Fruta",
+                minPriceKg: 20,
+                maxPriceKg: 25,
+                minPriceBox: 250,
+                maxPriceBox: 300,
+                boxWeight: "12 piezas",
+                image: "https://images.unsplash.com/photo-1580984969071-a8da5656c2fb?w=200&h=200&fit=crop"
+            },
+            {
+                id: 21,
+                name: "Caña",
+                category: "Otro",
+                minPriceKg: 10,
+                maxPriceKg: 15,
+                minPriceBox: 180,
+                maxPriceBox: 250,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1607962612857-3d846b881654?w=200&h=200&fit=crop"
+            },
+            {
+                id: 22,
+                name: "Piña",
+                category: "Fruta",
+                minPriceKg: 12,
+                maxPriceKg: 18,
+                minPriceBox: 140,
+                maxPriceBox: 180,
+                boxWeight: "8-10 kg",
+                image: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=200&h=200&fit=crop"
+            },
+            {
+                id: 23,
+                name: "Jamaica (flor)",
+                category: "Otro",
+                minPriceKg: 80,
+                maxPriceKg: 110,
+                minPriceBox: 800,
+                maxPriceBox: 1100,
+                boxWeight: "10 kg",
+                image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&h=200&fit=crop"
+            },
+            {
+                id: 24,
+                name: "Azúcar",
+                category: "Otro",
+                minPriceKg: 18,
+                maxPriceKg: 22,
+                minPriceBox: 360,
+                maxPriceBox: 440,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1587130413853-3c0a5c91c75e?w=200&h=200&fit=crop"
+            },
+            {
+                id: 25,
+                name: "Tamarindo",
+                category: "Fruta",
+                minPriceKg: 25,
+                maxPriceKg: 35,
+                minPriceBox: 450,
+                maxPriceBox: 550,
+                boxWeight: "20 kg",
+                image: "https://images.unsplash.com/photo-1543076499-a6133cb561c0?w=200&h=200&fit=crop"
+            }
+        ];
+        
+        // Estado del carrito
+        let cart = [];
+        let selectedCategory = 'all';
+        let selectedPaymentMethod = 'transferencia';
+        
+        // Elementos del DOM
+        const productCatalog = document.getElementById('productCatalog');
+        const categoryFilters = document.getElementById('categoryFilters');
+        const cartButton = document.getElementById('cartButton');
+        const cartCount = document.getElementById('cartCount');
+        const cartOverlay = document.getElementById('cartOverlay');
+        const closeCart = document.getElementById('closeCart');
+        const cartItems = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const clearCart = document.getElementById('clearCart');
+        const checkoutButton = document.getElementById('checkoutButton');
+        const customerName = document.getElementById('customerName');
+        const customerPhone = document.getElementById('customerPhone');
+        const fullAddress = document.getElementById('fullAddress');
+        const locationButton = document.getElementById('locationButton');
+        const orderStatus = document.getElementById('orderStatus');
+        const orderDate = document.getElementById('orderDate');
+        const notification = document.getElementById('notification');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const modalCancel = document.getElementById('modalCancel');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const mapContainer = document.getElementById('mapContainer');
+        const mapIframe = document.getElementById('mapIframe');
+        
+        // Campos de dirección
+        const street = document.getElementById('street');
+        const extNumber = document.getElementById('extNumber');
+        const intNumber = document.getElementById('intNumber');
+        const neighborhood = document.getElementById('neighborhood');
+        const city = document.getElementById('city');
+        const state = document.getElementById('state');
+        const zipCode = document.getElementById('zipCode');
+        
+        // Grupos de formulario para validación
+        const nameGroup = document.getElementById('nameGroup');
+        const phoneGroup = document.getElementById('phoneGroup');
+        const addressGroup = document.getElementById('addressGroup');
+        const streetGroup = document.getElementById('streetGroup');
+        
+        // Inicializar la aplicación
+        function init() {
+            renderProducts();
+            setupEventListeners();
+            updateCartUI();
+            updateOrderDate();
+        }
+        
+        // Renderizar productos en el catálogo
+        function renderProducts() {
+            productCatalog.innerHTML = '';
+            
+            const filteredProducts = selectedCategory === 'all' 
+                ? products 
+                : products.filter(product => product.category === selectedCategory);
+            
+            filteredProducts.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'product-item';
+                
+                // Calcular precios promedio
+                const avgPriceKg = (product.minPriceKg + product.maxPriceKg) / 2;
+                const avgPriceBox = (product.minPriceBox + product.maxPriceBox) / 2;
+                
+                productItem.innerHTML = `
+                    <img src="${product.image}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="product-category">${product.category}</div>
+                        <div class="product-prices">
+                            <div class="price">
+                                <span class="price-label">Por kg:</span>
+                                <span class="price-value">$${product.minPriceKg} - $${product.maxPriceKg}</span>
+                            </div>
+                            <div class="price">
+                                <span class="price-label">Por caja:</span>
+                                <span class="price-value">$${product.minPriceBox} - $${product.maxPriceBox}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="product-actions">
+                        <div class="product-options">
+                            <div class="unit-option selected" data-unit="kg" data-id="${product.id}">Por kg</div>
+                            <div class="unit-option" data-unit="box" data-id="${product.id}">Por caja</div>
+                        </div>
+                        <button class="add-to-cart" data-id="${product.id}">Agregar</button>
+                    </div>
+                `;
+                
+                productCatalog.appendChild(productItem);
+            });
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Filtros de categoría
+            categoryFilters.addEventListener('click', (e) => {
+                if (e.target.classList.contains('category-filter')) {
+                    // Remover clase active de todos los filtros
+                    document.querySelectorAll('.category-filter').forEach(filter => {
+                        filter.classList.remove('active');
+                    });
+                    
+                    // Agregar clase active al filtro seleccionado
+                    e.target.classList.add('active');
+                    
+                    // Actualizar categoría seleccionada y renderizar productos
+                    selectedCategory = e.target.getAttribute('data-category');
+                    renderProducts();
+                }
+            });
+            
+            // Opciones de unidad (kg o caja)
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('unit-option')) {
+                    const productId = parseInt(e.target.getAttribute('data-id'));
+                    
+                    // Remover clase selected de todas las opciones del mismo producto
+                    document.querySelectorAll(`.unit-option[data-id="${productId}"]`).forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // Agregar clase selected a la opción seleccionada
+                    e.target.classList.add('selected');
+                }
+            });
+            
+            // Botones de agregar al carrito
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-to-cart')) {
+                    const productId = parseInt(e.target.getAttribute('data-id'));
+                    addToCart(productId);
+                }
+            });
+            
+            // Opciones de pago
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('payment-option')) {
+                    // Remover clase selected de todas las opciones
+                    document.querySelectorAll('.payment-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // Agregar clase selected a la opción seleccionada
+                    e.target.classList.add('selected');
+                    
+                    // Actualizar método de pago seleccionado
+                    selectedPaymentMethod = e.target.getAttribute('data-payment');
+                }
+            });
+            
+            // Event listeners para eliminar errores al escribir
+            customerName.addEventListener('input', () => {
+                if (customerName.value.trim()) {
+                    nameGroup.classList.remove('error');
+                }
+            });
+            
+            customerPhone.addEventListener('input', () => {
+                if (customerPhone.value.trim()) {
+                    phoneGroup.classList.remove('error');
+                }
+            });
+            
+            street.addEventListener('input', () => {
+                if (street.value.trim()) {
+                    streetGroup.classList.remove('error');
+                    addressGroup.classList.remove('error');
+                }
+            });
+            
+            fullAddress.addEventListener('input', () => {
+                if (fullAddress.value.trim()) {
+                    addressGroup.classList.remove('error');
+                }
+            });
+            
+            // Botón de ubicación - Mejorado con geocodificación inversa y mapa
+            locationButton.addEventListener('click', () => {
+                // Mostrar notificación de carga
+                showNotification('Obteniendo tu ubicación...');
+                
+                // Usar la API de geolocalización del navegador
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            
+                            // Mostrar mapa con la ubicación
+                            showMap(lat, lng);
+                            
+                            // Usar la API de geocodificación inversa de Nominatim (OpenStreetMap)
+                            // Esta es una alternativa gratuita a Google Maps para obtener la dirección
+                            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    // Extraer la dirección del resultado
+                                    const address = data.display_name || `${lat}, ${lng}`;
+                                    
+                                    // Llenar el campo de dirección completa
+                                    fullAddress.value = address;
+                                    
+                                    // Intentar extraer componentes de la dirección para llenar los campos separados
+                                    const addressComponents = data.address;
+                                    if (addressComponents) {
+                                        street.value = addressComponents.road || '';
+                                        extNumber.value = addressComponents.house_number || '';
+                                        neighborhood.value = addressComponents.suburb || addressComponents.neighbourhood || '';
+                                        city.value = addressComponents.city || addressComponents.town || addressComponents.village || '';
+                                        state.value = addressComponents.state || '';
+                                        zipCode.value = addressComponents.postcode || '';
+                                    }
+                                    
+                                    // Eliminar errores de dirección
+                                    addressGroup.classList.remove('error');
+                                    streetGroup.classList.remove('error');
+                                    
+                                    // Mostrar notificación de éxito
+                                    showNotification('Ubicación obtenida correctamente');
+                                })
+                                .catch(error => {
+                                    console.error('Error al obtener la dirección:', error);
+                                    
+                                    // Si hay un error, abrir Google Maps con las coordenadas
+                                    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                                    window.open(googleMapsUrl, '_blank');
+                                    
+                                    // Mostrar notificación informativa
+                                    showNotification('No se pudo obtener la dirección automáticamente, abre Google Maps para seleccionarla');
+                                });
+                        },
+                        error => {
+                            console.error('Error al obtener la ubicación:', error);
+                            
+                            // Si hay un error al obtener la ubicación, abrir Google Maps para búsqueda manual
+                            window.open('https://www.google.com/maps', '_blank');
+                            showNotification('No se pudo obtener tu ubicación, busca tu dirección manualmente');
+                        }
+                    );
+                } else {
+                    // Si el navegador no soporta geolocalización, abrir Google Maps
+                    window.open('https://www.google.com/maps', '_blank');
+                    showNotification('Tu navegador no soporta geolocalización, busca tu dirección manualmente');
+                }
+            });
+            
+            // Abrir carrito
+            cartButton.addEventListener('click', () => {
+                cartOverlay.classList.add('active');
+            });
+            
+            // Cerrar carrito
+            closeCart.addEventListener('click', () => {
+                cartOverlay.classList.remove('active');
+            });
+            
+            // Cerrar carrito al hacer clic fuera
+            cartOverlay.addEventListener('click', (e) => {
+                if (e.target === cartOverlay) {
+                    cartOverlay.classList.remove('active');
+                }
+            });
+            
+            // Vaciar carrito
+            clearCart.addEventListener('click', () => {
+                if (cart.length > 0) {
+                    confirmationModal.classList.add('active');
+                }
+            });
+            
+            // Modal de confirmación - Cancelar
+            modalCancel.addEventListener('click', () => {
+                confirmationModal.classList.remove('active');
+            });
+            
+            // Modal de confirmación - Confirmar
+            modalConfirm.addEventListener('click', () => {
+                cart = [];
+                updateCartUI();
+                confirmationModal.classList.remove('active');
+                cartOverlay.classList.remove('active');
+                showNotification('Carrito vaciado correctamente');
+            });
+            
+            // Cerrar modal al hacer clic fuera
+            confirmationModal.addEventListener('click', (e) => {
+                if (e.target === confirmationModal) {
+                    confirmationModal.classList.remove('active');
+                }
+            });
+            
+            // Botón de checkout
+            checkoutButton.addEventListener('click', checkout);
+        }
+        
+        // Mostrar mapa con las coordenadas
+        function showMap(lat, lng) {
+            // Construir URL para el iframe de Google Maps
+            const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${lat},${lng}&zoom=15`;
+            
+            // Actualizar el iframe con la URL
+            mapIframe.src = mapUrl;
+            
+            // Mostrar el contenedor del mapa
+            mapContainer.classList.add('active');
+        }
+        
+        // Mostrar notificación temporal
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            if (isError) {
+                notification.classList.add('error');
+            } else {
+                notification.classList.remove('error');
+            }
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Validar formulario con marcado de errores
+        function validateForm() {
+            let isValid = true;
+            
+            // Resetear todos los errores
+            nameGroup.classList.remove('error');
+            phoneGroup.classList.remove('error');
+            addressGroup.classList.remove('error');
+            streetGroup.classList.remove('error');
+            
+            // Validar nombre
+            if (!customerName.value.trim()) {
+                nameGroup.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validar teléfono
+            if (!customerPhone.value.trim()) {
+                phoneGroup.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validar dirección (al menos calle o dirección completa)
+            if (!street.value.trim() && !fullAddress.value.trim()) {
+                addressGroup.classList.add('error');
+                streetGroup.classList.add('error');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                showNotification('Por favor, completa los campos marcados en rojo', true);
+            }
+            
+            return isValid;
+        }
+        
+        // Agregar producto al carrito
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            
+            // Determinar si se seleccionó kg o caja
+            const selectedUnit = document.querySelector(`.unit-option.selected[data-id="${productId}"]`).getAttribute('data-unit');
+            
+            // Calcular precio promedio según la unidad seleccionada
+            let price;
+            if (selectedUnit === 'kg') {
+                price = (product.minPriceKg + product.maxPriceKg) / 2;
+            } else {
+                price = (product.minPriceBox + product.maxPriceBox) / 2;
+            }
+            
+            // Verificar si el producto ya está en el carrito con la misma unidad
+            const existingItem = cart.find(item => item.id === productId && item.unit === selectedUnit);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...product,
+                    quantity: 1,
+                    unit: selectedUnit,
+                    price: price
+                });
+            }
+            
+            updateCartUI();
+            
+            // Mostrar notificación temporal
+            showNotification(`${product.name} agregado al carrito`);
+        }
+        
+        // Eliminar producto del carrito
+        function removeFromCart(productId, unit) {
+            cart = cart.filter(item => !(item.id === productId && item.unit === unit));
+            updateCartUI();
+        }
+        
+        // Actualizar cantidad de un producto en el carrito
+        function updateQuantity(productId, unit, newQuantity) {
+            const item = cart.find(item => item.id === productId && item.unit === unit);
+            
+            if (item) {
+                if (newQuantity <= 0) {
+                    removeFromCart(productId, unit);
+                } else {
+                    item.quantity = newQuantity;
+                    updateCartUI();
+                }
+            }
+        }
+        
+        // Cambiar unidad de un producto en el carrito
+        function changeUnit(productId, oldUnit, newUnit) {
+            const itemIndex = cart.findIndex(item => item.id === productId && item.unit === oldUnit);
+            
+            if (itemIndex !== -1) {
+                const item = cart[itemIndex];
+                const product = products.find(p => p.id === productId);
+                
+                // Calcular nuevo precio según la unidad
+                let newPrice;
+                if (newUnit === 'kg') {
+                    newPrice = (product.minPriceKg + product.maxPriceKg) / 2;
+                } else {
+                    newPrice = (product.minPriceBox + product.maxPriceBox) / 2;
+                }
+                
+                // Verificar si ya existe un producto con la nueva unidad
+                const existingItem = cart.find(i => i.id === productId && i.unit === newUnit);
+                
+                if (existingItem) {
+                    // Si ya existe, sumar las cantidades
+                    existingItem.quantity += item.quantity;
+                    // Eliminar el item original
+                    cart.splice(itemIndex, 1);
+                } else {
+                    // Si no existe, actualizar la unidad y el precio
+                    item.unit = newUnit;
+                    item.price = newPrice;
+                }
+                
+                updateCartUI();
+            }
+        }
+        
+        // Actualizar la interfaz del carrito
+        function updateCartUI() {
+            // Actualizar contador de productos
+            const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+            cartCount.textContent = totalItems;
+            
+            // Actualizar contenido del carrito
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-cart">Tu carrito está vacío</div>';
+                cartTotal.textContent = '$0.00';
+                return;
+            }
+            
+            cartItems.innerHTML = '';
+            let total = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                
+                cartItem.innerHTML = `
+                    <div class="cart-item-header">
+                        <div class="cart-item-name">${item.name}</div>
+                        <button class="cart-item-remove" data-id="${item.id}" data-unit="${item.unit}">&times;</button>
+                    </div>
+                    <div class="cart-item-details">
+                        <div class="quantity-controls">
+                            <button class="quantity-btn quantity-decrease" data-id="${item.id}" data-unit="${item.unit}">-</button>
+                            <span class="quantity-value">${item.quantity}</span>
+                            <button class="quantity-btn quantity-increase" data-id="${item.id}" data-unit="${item.unit}">+</button>
+                        </div>
+                        <div class="unit-selector">
+                            <div class="unit-option ${item.unit === 'kg' ? 'selected' : ''}" data-id="${item.id}" data-unit="kg">kg</div>
+                            <div class="unit-option ${item.unit === 'box' ? 'selected' : ''}" data-id="${item.id}" data-unit="box">caja</div>
+                        </div>
+                        <div class="cart-item-price">$${itemTotal.toFixed(2)}</div>
+                    </div>
+                `;
+                
+                cartItems.appendChild(cartItem);
+            });
+            
+            // Agregar event listeners para los botones de eliminar
+            document.querySelectorAll('.cart-item-remove').forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = parseInt(button.getAttribute('data-id'));
+                    const unit = button.getAttribute('data-unit');
+                    removeFromCart(productId, unit);
+                });
+            });
+            
+            // Agregar event listeners para los botones de cantidad
+            document.querySelectorAll('.quantity-decrease').forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = parseInt(button.getAttribute('data-id'));
+                    const unit = button.getAttribute('data-unit');
+                    const item = cart.find(i => i.id === productId && i.unit === unit);
+                    if (item) {
+                        updateQuantity(productId, unit, item.quantity - 1);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.quantity-increase').forEach(button => {
+                button.addEventListener('click', () => {
+                    const productId = parseInt(button.getAttribute('data-id'));
+                    const unit = button.getAttribute('data-unit');
+                    const item = cart.find(i => i.id === productId && i.unit === unit);
+                    if (item) {
+                        updateQuantity(productId, unit, item.quantity + 1);
+                    }
+                });
+            });
+            
+            // Agregar event listeners para las opciones de unidad en el carrito
+            document.querySelectorAll('.cart-item .unit-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const productId = parseInt(option.getAttribute('data-id'));
+                    const newUnit = option.getAttribute('data-unit');
+                    const oldUnit = option.classList.contains('selected') ? newUnit : 
+                        (newUnit === 'kg' ? 'box' : 'kg');
+                    
+                    if (oldUnit !== newUnit) {
+                        changeUnit(productId, oldUnit, newUnit);
+                    }
+                });
+            });
+            
+            // Actualizar total
+            cartTotal.textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Actualizar fecha del pedido con timestamp
+        function updateOrderDate() {
+            const now = new Date();
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            
+            const dateStr = now.toLocaleDateString('es-MX', dateOptions);
+            const timeStr = now.toLocaleTimeString('es-MX', timeOptions);
+            
+            orderDate.textContent = `Fecha de solicitud: ${dateStr} a las ${timeStr}`;
+        }
+        
+        // Procesar el checkout
+        function checkout() {
+            if (cart.length === 0) {
+                showNotification('Tu carrito está vacío', true);
+                return;
+            }
+            
+            // Validar formulario con marcado de errores
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Construir dirección completa si no se ha ingresado
+            let completeAddress = fullAddress.value.trim();
+            if (!completeAddress) {
+                completeAddress = `${street.value} ${extNumber.value} ${intNumber.value ? 'Int ' + intNumber.value : ''}, ${neighborhood.value}, ${city.value}, ${state.value}, CP ${zipCode.value}`;
+            }
+            
+            // Construir mensaje para WhatsApp
+            let message = "Hola, quiero hacer este pedido:\n\n";
+            message += `Nombre: ${customerName.value}\n`;
+            message += `Teléfono: ${customerPhone.value}\n`;
+            message += `Dirección: ${completeAddress}\n`;
+            message += `Método de pago: ${selectedPaymentMethod === 'transferencia' ? 'Transferencia' : 'Efectivo'}\n`;
+            message += `Estatus: Pendiente\n`;
+            message += `Fecha de solicitud: ${new Date().toLocaleDateString('es-MX')} a las ${new Date().toLocaleTimeString('es-MX')}\n\n`;
+            message += "Productos:\n";
+            
+            let total = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                message += `${item.name}: ${item.quantity} ${item.unit === 'kg' ? 'kg' : 'caja'} x $${item.price.toFixed(2)} = $${itemTotal.toFixed(2)}\n`;
+            });
+            
+            message += `\nTotal: $${total.toFixed(2)}`;
+            
+            // Codificar mensaje para URL
+            const encodedMessage = encodeURIComponent(message);
+            
+            // Abrir WhatsApp con el mensaje prellenado
+            const whatsappUrl = `https://wa.me/5530528999?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+            
+            // Actualizar estatus del pedido
+            orderStatus.textContent = 'Enviado';
+            
+            // Vaciar carrito después de realizar el pedido
+            setTimeout(() => {
+                cart = [];
+                updateCartUI();
+                
+                // Limpiar formulario
+                customerName.value = '';
+                customerPhone.value = '';
+                fullAddress.value = '';
+                street.value = '';
+                extNumber.value = '';
+                intNumber.value = '';
+                neighborhood.value = '';
+                city.value = '';
+                state.value = '';
+                zipCode.value = '';
+                
+                // Eliminar clases de error
+                nameGroup.classList.remove('error');
+                phoneGroup.classList.remove('error');
+                addressGroup.classList.remove('error');
+                streetGroup.classList.remove('error');
+                
+                // Ocultar mapa
+                mapContainer.classList.remove('active');
+                
+                // Cerrar el carrito
+                cartOverlay.classList.remove('active');
+                
+                // Restablecer estatus del pedido
+                orderStatus.textContent = 'Pendiente';
+                
+                // Actualizar fecha
+                updateOrderDate();
+                
+                // Mostrar notificación
+                showNotification('Pedido enviado correctamente');
+            }, 2000);
+        }
+        
+        // Iniciar la aplicación cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
