@@ -1,0 +1,40 @@
+name: Actualizar Precios en Gist
+
+on:
+  repository_dispatch:
+    types: [update_prices]
+
+jobs:
+  update-gist:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      gist: write # Permiso para modificar el Gist
+
+    steps:
+      - name: Actualizar Gist con nuevos precios
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GIST_TOKEN }}
+          script: |
+            const gistId = '7796cbf91e8445723bed7b2264747f4a';
+            const newPrices = context.payload.client_payload.prices;
+            
+            // Obtener el Gist actual
+            const { data: gist } = await github.rest.gists.get({
+              gist_id: gistId,
+            });
+            
+            const fileName = Object.keys(gist.files)[0];
+            
+            // Actualizar el contenido del archivo
+            await github.rest.gists.update({
+              gist_id: gistId,
+              files: {
+                [fileName]: {
+                  content: JSON.stringify(newPrices, null, 2)
+                }
+              }
+            });
+            
+            console.log('Gist actualizado con éxito.');
