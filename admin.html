@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRUTITA - Administración de Precios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-header h1 {
+            color: #4CAF50;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .price-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .price-item:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+        
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .product-name::before {
+            content: "🍎";
+            margin-right: 0.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .price-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .price-input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .price-input-group label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .price-input {
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .price-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+        }
+        
+        .price-input::before {
+            content: "$";
+            margin-right: 0.3rem;
+            color: #4CAF50;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .success-message.active {
+            display: block;
+        }
+        
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+        }
+        
+        .config-section {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .config-section h3 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .config-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 1rem;
+            }
+            
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>🍓 FRUTITA</h1>
+            <p>Panel de Administración de Precios</p>
+        </div>
+        
+        <div class="config-section">
+            <h3>⚙️ Configuración</h3>
+            <input type="text" id="gistId" class="config-input" placeholder="ID del Gist">
+            <input type="text" id="githubToken" class="config-input" placeholder="Token de GitHub">
+            <button class="btn btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+        </div>
+        
+        <div class="price-grid" id="priceGrid">
+            <!-- Los productos se generarán dinámicamente -->
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-primary" onclick="updateAllPrices()">
+                💾 Actualizar Todos los Precios
+            </button>
+            <button class="btn btn-secondary" onclick="resetPrices()">
+                🔄 Restablecer Precios
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Actualizando precios...</p>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            ✅ Precios actualizados correctamente
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            ❌ Error al actualizar los precios
+        </div>
+    </div>
+    
+    <script>
+        // Lista de productos para el panel de administración
+        const adminProducts = [
+            { key: "sandia", name: "Sandía", emoji: "🍉" },
+            { key: "melon", name: "Melón", emoji: "🍈" },
+            { key: "guayaba", name: "Guayaba", emoji: "🍐" },
+            { key: "naranja", name: "Naranja", emoji: "🍊" },
+            { key: "toronja", name: "Toronja", emoji: "🍊" },
+            { key: "aguacate", name: "Aguacate", emoji: "🥑" },
+            { key: "mandarina", name: "Mandarina", emoji: "🍊" },
+            { key: "manzana", name: "Manzana", emoji: "🍎" },
+            { key: "uva", name: "Uva", emoji: "🍇" },
+            { key: "pera", name: "Pera", emoji: "🍐" },
+            { key: "tejocote", name: "Tejocote", emoji: "🍐" },
+            { key: "coco", name: "Coco", emoji: "🥥" },
+            { key: "pina", name: "Piña", emoji: "🍍" },
+            { key: "tamarindo", name: "Tamarindo", emoji: "🍑" },
+            { key: "pepino", name: "Pepino", emoji: "🥒" },
+            { key: "jicama", name: "Jícama", emoji: "🍠" },
+            { key: "zanahoria", name: "Zanahoria", emoji: "🥕" },
+            { key: "betabel", name: "Betabel", emoji: "🍎" },
+            { key: "lechuga", name: "Lechuga", emoji: "🥬" },
+            { key: "apio", name: "Apio", emoji: "🥬" },
+            { key: "hierbabuena", name: "Hierbabuena", emoji: "🌿" },
+            { key: "jengibre", name: "Jengibre", emoji: "🫚" },
+            { key: "cana", name: "Caña", emoji: "🎋
