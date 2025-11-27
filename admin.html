@@ -1,143 +1,57 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Frutita</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h1 { color: #4CAF50; text-align: center; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: bold; text-transform: capitalize; }
-        input[type="number"] { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 0.75rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #45a049; }
-        #status { text-align: center; margin-top: 1rem; font-weight: bold; }
-        .success { color: #28a745; }
-        .error { color: #dc3545; }
-    </style>
-</head>
+# Nombre del flujo de trabajo que aparecerá en la pestaña "Actions" de tu repo
+name: Actualizar Precios en Gist
 
-<body>
+# Evento que activa este flujo: un 'dispatch' llamado 'update_prices'
+# Este nombre debe ser EXACTAMENTE igual al que se envía desde admin.html
+on:
+  repository_dispatch:
+    types: [update_prices]
 
-    <div class="container">
-        <h1>Panel de Precios 🍓</h1>
-        <form id="price-form">
-            <div id="price-fields">
-                <!-- Los campos de precio se cargarán aquí dinámicamente -->
-            </div>
-            <button type="submit">Actualizar Todos los Precios</button>
-        </form>
-        <div id="status"></div>
-    </div>
+# Tareas a realizar cuando se activa el flujo
+jobs:
+  # Tarea para actualizar el Gist
+  update-gist:
+    # Se ejecuta en la última versión de Ubuntu (un servidor virtual)
+    runs-on: ubuntu-latest
+    
+    # Permisos que necesita el flujo. Aplicamos el principio de menor privilegio.
+    permissions:
+      contents: read # Solo necesita leer el contenido del repo
+      gist: write    # Necesita permiso para escribir en el Gist
 
-    <script>
-        // --- CONFIGURACIÓN ---
-        // Pega aquí tu ID de Gist y tu Token PÚBLICO (de bajo riesgo)
-        const CONFIG = {
-            gistId: '7796cbf91e8445723bed7b2264747f4a', // El ID de tu Gist
-            githubToken: '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' // <--- ¡IMPORTANTE! Pega aquí el token "Token Publico Frutita Admin"
-        };
-        // ---------------------
-
-        const form = document.getElementById('price-form');
-        const fieldsContainer = document.getElementById('price-fields');
-        const statusDiv = document.getElementById('status');
-
-        // Función para cargar los precios desde el Gist (lectura pública)
-        async function fetchPrices() {
-            const response = await fetch(`https://api.github.com/gists/${CONFIG.gistId}`);
-            const data = await response.json();
-            const fileContent = JSON.parse(Object.values(data.files)[0].content);
-            return fileContent;
-        }
-
-        // Función para ENVIAR la solicitud de actualización (no actualiza el Gist directamente)
-        async function triggerUpdate(newData) {
-            statusDiv.textContent = 'Enviando actualización...';
-            statusDiv.className = '';
-
-            // Hacemos una llamada a la API de GitHub para activar nuestro 'repository_dispatch'
-            const response = await fetch(`https://api.github.com/repos/InfinitecSolutions/frutita/dispatches`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${CONFIG.githubToken}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/vnd.github.everest-preview+json' // Header necesario para este endpoint
-                },
-                body: JSON.stringify({
-                    event_type: 'update_prices', // El nombre del evento que nuestro workflow está escuchando
-                    client_payload: {
-                        prices: newData // Enviamos los nuevos precios en el 'payload'
-                    }
-                })
+    # Pasos que seguirá la tarea
+    steps:
+      # Paso 1: Actualizar el Gist con los nuevos precios
+      - name: Actualizar Gist con nuevos precios
+        # Usa la acción oficial de GitHub para ejecutar scripts de forma segura
+        uses: actions/github-script@v6
+        with:
+          # Usa el token que guardamos de forma segura en los Secrets del repo
+          # Este es el "Token Seguro" que no se expone
+          github-token: ${{ secrets.GIST_TOKEN }}
+          # El script que se ejecutará para modificar el Gist
+          script: |
+            // ID del Gist que queremos modificar
+            const gistId = '7796cbf91e8445723bed7b2264747f4a';
+            
+            // Obtenemos los nuevos precios del 'payload' que envió admin.html
+            const newPrices = context.payload.client_payload.prices;
+            
+            // Obtenemos la información actual del Gist para saber el nombre del archivo
+            const { data: gist } = await github.rest.gists.get({
+              gist_id: gistId,
             });
-
-            if (response.ok) {
-                statusDiv.textContent = '¡Solicitud de actualización enviada! La tienda se actualizará en unos segundos.';
-                statusDiv.className = 'success';
-            } else {
-                const errorData = await response.json();
-                statusDiv.textContent = `Error al enviar la solicitud: ${errorData.message}`;
-                statusDiv.className = 'error';
-            }
-        }
-
-        // Función para crear los campos del formulario dinámicamente
-        function createFormFields(prices) {
-            fieldsContainer.innerHTML = ''; // Limpiar campos anteriores
-            for (const fruit in prices) {
-                const fieldGroup = document.createElement('div');
-                fieldGroup.className = 'form-group';
-
-                const label = document.createElement('label');
-                label.setAttribute('for', fruit);
-                label.textContent = fruit;
-
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.id = fruit;
-                input.name = fruit;
-                input.step = '0.01';
-                input.value = prices[fruit];
-                input.required = true;
-
-                fieldGroup.appendChild(label);
-                fieldGroup.appendChild(input);
-                fieldsContainer.appendChild(fieldGroup);
-            }
-        }
-
-        // Cargar precios al iniciar la página
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (CONFIG.githubToken === 'Pega_Aqui_Tu_Token_Publico') {
-                statusDiv.textContent = 'Error: Debes pegar tu Token Público en el archivo admin.html';
-                statusDiv.className = 'error';
-                return;
-            }
-            try {
-                const prices = await fetchPrices();
-                createFormFields(prices);
-            } catch (error) {
-                statusDiv.textContent = 'Error al cargar los precios desde Gist.';
-                statusDiv.className = 'error';
-                console.error(error);
-            }
-        });
-
-        // Manejar el envío del formulario
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Evitar que la página se recargue
-            const formData = new FormData(form);
-            const newPrices = {};
-            formData.forEach((value, key) => {
-                newPrices[key] = parseFloat(value);
+            
+            const fileName = Object.keys(gist.files)[0];
+            
+            // Actualizamos el contenido del archivo en el Gist con los nuevos precios
+            await github.rest.gists.update({
+              gist_id: gistId,
+              files: {
+                [fileName]: {
+                  content: JSON.stringify(newPrices, null, 2) // Formateamos el JSON para que sea legible
+                }
+              }
             });
-            // Llamamos a nuestra nueva función que dispara el workflow
-            await triggerUpdate(newPrices);
-        });
-    </script>
-
-</body>
-</html>
+            
+            console.log('Gist actualizado con éxito.');
