@@ -538,22 +538,66 @@
             min-height: 80px;
         }
         
-        .location-input {
+        .location-button-container {
             display: flex;
+            align-items: center;
             gap: 0.5rem;
-        }
-        
-        .location-input input {
-            flex-grow: 1;
+            margin-bottom: 1rem;
         }
         
         .location-button {
             background-color: var(--primary-green);
             color: var(--white);
             border: none;
-            border-radius: 5px;
-            padding: 0 0.8rem;
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .location-button:hover {
+            background-color: var(--light-green);
+        }
+        
+        .location-button::before {
+            content: "📍";
+            margin-right: 0.5rem;
+        }
+        
+        .location-hint {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .address-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .address-form .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .map-container {
+            margin-top: 0.5rem;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 150px;
+            display: none;
+        }
+        
+        .map-container.active {
+            display: block;
+        }
+        
+        .map-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
         
         .payment-options {
@@ -718,35 +762,6 @@
             text-decoration: underline;
         }
         
-        /* Estilos para el formulario de dirección mejorado */
-        .address-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-        }
-        
-        .address-form .form-group.full-width {
-            grid-column: span 2;
-        }
-        
-        .map-container {
-            margin-top: 0.5rem;
-            border-radius: 5px;
-            overflow: hidden;
-            height: 150px;
-            display: none;
-        }
-        
-        .map-container.active {
-            display: block;
-        }
-        
-        .map-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
         /* Mensaje de error */
         .error-message {
             color: var(--error-red);
@@ -757,6 +772,48 @@
         
         .form-group.error .error-message {
             display: block;
+        }
+        
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+        }
+        
+        .loading-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-gray);
+            border-top: 5px solid var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 1rem;
+            font-weight: bold;
+            color: var(--dark-gray);
         }
         
         /* Responsive */
@@ -858,6 +915,12 @@
                 
                 <div class="form-group" id="addressGroup">
                     <label>Dirección de envío:</label>
+                    
+                    <div class="location-button-container">
+                        <button class="location-button" id="locationButton">Obtener mi ubicación</button>
+                        <span class="location-hint">Usa tu GPS para autocompletar la dirección</span>
+                    </div>
+                    
                     <div class="address-form">
                         <div class="form-group" id="streetGroup">
                             <input type="text" id="street" placeholder="Calle">
@@ -882,10 +945,7 @@
                             <input type="text" id="zipCode" placeholder="Código postal">
                         </div>
                         <div class="form-group full-width">
-                            <div class="location-input">
-                                <input type="text" id="fullAddress" placeholder="Dirección completa">
-                                <button class="location-button" id="locationButton">📍</button>
-                            </div>
+                            <input type="text" id="fullAddress" placeholder="Dirección completa">
                             <span class="error-message">Debes ingresar al menos la calle o la dirección completa</span>
                         </div>
                     </div>
@@ -932,22 +992,42 @@
         Producto agregado al carrito
     </div>
     
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div>
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Cargando precios...</div>
+        </div>
+    </div>
+    
     <footer>
         <p>&copy; 2025 FRUTITA - Todos los derechos reservados</p>
         <p>Diseñado por <a href="https://www.infinitecsolutions.com" target="_blank">Infinitec Solutions</a></p>
     </footer>
     
     <script>
-        // Datos de productos con imágenes reales
+        // ============================================
+        // CONFIGURACIÓN DEL GIST - ACTUALIZAR SOLO ESTO
+        // ============================================
+        const GIST_CONFIG = {
+            // ID de tu Gist (lo copias de la URL del Gist)
+            gistId: 'AQUÍ_VA_EL_ID_DE_TU_GIST',
+            // Token de acceso personal de GitHub (crea uno en: https://github.com/settings/tokens)
+            // Solo necesitas permisos de "gist"
+            token: 'AQUÍ_VA_EL_TOKEN_DE_GITHUB',
+            // Nombre del archivo en el Gist
+            filename: 'frutita-precios.json'
+        };
+        
+        // ============================================
+        // DATOS DE PRODUCTOS (NO MODIFICAR)
+        // ============================================
         const products = [
             {
                 id: 1,
                 name: "Sandía",
                 category: "Fruta",
-                minPriceKg: 5,
-                maxPriceKg: 8,
-                minPriceBox: 120,
-                maxPriceBox: 180,
+                priceKey: "sandia",
                 boxWeight: "20-25 kg",
                 image: "https://images.unsplash.com/photo-1581375321224-79da6fb8020a?w=200&h=200&fit=crop"
             },
@@ -955,10 +1035,7 @@
                 id: 2,
                 name: "Melón",
                 category: "Fruta",
-                minPriceKg: 8,
-                maxPriceKg: 12,
-                minPriceBox: 280,
-                maxPriceBox: 360,
+                priceKey: "melon",
                 boxWeight: "30-35 kg",
                 image: "https://images.unsplash.com/photo-1595405918218-36d232a8d079?w=200&h=200&fit=crop"
             },
@@ -966,10 +1043,7 @@
                 id: 3,
                 name: "Pepino",
                 category: "Hortaliza",
-                minPriceKg: 12,
-                maxPriceKg: 18,
-                minPriceBox: 150,
-                maxPriceBox: 200,
+                priceKey: "pepino",
                 boxWeight: "25 kg",
                 image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?w=200&h=200&fit=crop"
             },
@@ -977,10 +1051,7 @@
                 id: 4,
                 name: "Jícama",
                 category: "Hortaliza",
-                minPriceKg: 20,
-                maxPriceKg: 30,
-                minPriceBox: 350,
-                maxPriceBox: 450,
+                priceKey: "jicama",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1577234286642-fc512a5f8f11?w=200&h=200&fit=crop"
             },
@@ -988,10 +1059,7 @@
                 id: 5,
                 name: "Zanahoria",
                 category: "Hortaliza",
-                minPriceKg: 12,
-                maxPriceKg: 16,
-                minPriceBox: 180,
-                maxPriceBox: 220,
+                priceKey: "zanahoria",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?w=200&h=200&fit=crop"
             },
@@ -999,10 +1067,7 @@
                 id: 6,
                 name: "Betabel",
                 category: "Hortaliza",
-                minPriceKg: 15,
-                maxPriceKg: 20,
-                minPriceBox: 220,
-                maxPriceBox: 260,
+                priceKey: "betabel",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1595405921037-98699b42c00d?w=200&h=200&fit=crop"
             },
@@ -1010,10 +1075,7 @@
                 id: 7,
                 name: "Guayaba",
                 category: "Fruta",
-                minPriceKg: 25,
-                maxPriceKg: 35,
-                minPriceBox: 180,
-                maxPriceBox: 250,
+                priceKey: "guayaba",
                 boxWeight: "10 kg",
                 image: "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=200&h=200&fit=crop"
             },
@@ -1021,10 +1083,7 @@
                 id: 8,
                 name: "Naranja",
                 category: "Fruta",
-                minPriceKg: 10,
-                maxPriceKg: 14,
-                minPriceBox: 180,
-                maxPriceBox: 220,
+                priceKey: "naranja",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop"
             },
@@ -1032,10 +1091,7 @@
                 id: 9,
                 name: "Toronja",
                 category: "Fruta",
-                minPriceKg: 10,
-                maxPriceKg: 16,
-                minPriceBox: 180,
-                maxPriceBox: 230,
+                priceKey: "toronja",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1581375321224-79da6fb8020a?w=200&h=200&fit=crop"
             },
@@ -1043,10 +1099,7 @@
                 id: 10,
                 name: "Aguacate",
                 category: "Fruta",
-                minPriceKg: 45,
-                maxPriceKg: 70,
-                minPriceBox: 800,
-                maxPriceBox: 1200,
+                priceKey: "aguacate",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=200&h=200&fit=crop"
             },
@@ -1054,10 +1107,7 @@
                 id: 11,
                 name: "Lechuga",
                 category: "Hortaliza",
-                minPriceKg: 12,
-                maxPriceKg: 20,
-                minPriceBox: 140,
-                maxPriceBox: 180,
+                priceKey: "lechuga",
                 boxWeight: "12 piezas",
                 image: "https://images.unsplash.com/photo-1568909344668-6f14a07b56a0?w=200&h=200&fit=crop"
             },
@@ -1065,10 +1115,7 @@
                 id: 12,
                 name: "Hierbabuena",
                 category: "Hierba",
-                minPriceKg: 6,
-                maxPriceKg: 10,
-                minPriceBox: 120,
-                maxPriceBox: 160,
+                priceKey: "hierbabuena",
                 boxWeight: "20 manojos",
                 image: "https://images.unsplash.com/photo-1621898341751-39c5a369f35d?w=200&h=200&fit=crop"
             },
@@ -1076,10 +1123,7 @@
                 id: 13,
                 name: "Apio",
                 category: "Hortaliza",
-                minPriceKg: 20,
-                maxPriceKg: 28,
-                minPriceBox: 120,
-                maxPriceBox: 160,
+                priceKey: "apio",
                 boxWeight: "8 kg en manojos",
                 image: "https://images.unsplash.com/photo-1572446947411-7a3a4e9b5b7c?w=200&h=200&fit=crop"
             },
@@ -1087,10 +1131,7 @@
                 id: 14,
                 name: "Jengibre",
                 category: "Raíz",
-                minPriceKg: 60,
-                maxPriceKg: 90,
-                minPriceBox: 750,
-                maxPriceBox: 900,
+                priceKey: "jengibre",
                 boxWeight: "10 kg",
                 image: "https://images.unsplash.com/photo-1584203130898-56b4a9a0d6b3?w=200&h=200&fit=crop"
             },
@@ -1098,10 +1139,7 @@
                 id: 15,
                 name: "Mandarina",
                 category: "Fruta",
-                minPriceKg: 12,
-                maxPriceKg: 18,
-                minPriceBox: 200,
-                maxPriceBox: 260,
+                priceKey: "mandarina",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop"
             },
@@ -1109,10 +1147,7 @@
                 id: 16,
                 name: "Manzana",
                 category: "Fruta",
-                minPriceKg: 35,
-                maxPriceKg: 50,
-                minPriceBox: 900,
-                maxPriceBox: 1200,
+                priceKey: "manzana",
                 boxWeight: "18-20 kg",
                 image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop"
             },
@@ -1120,10 +1155,7 @@
                 id: 17,
                 name: "Uva",
                 category: "Fruta",
-                minPriceKg: 45,
-                maxPriceKg: 70,
-                minPriceBox: 300,
-                maxPriceBox: 400,
+                priceKey: "uva",
                 boxWeight: "8 kg",
                 image: "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=200&h=200&fit=crop"
             },
@@ -1131,10 +1163,7 @@
                 id: 18,
                 name: "Pera",
                 category: "Fruta",
-                minPriceKg: 35,
-                maxPriceKg: 50,
-                minPriceBox: 500,
-                maxPriceBox: 650,
+                priceKey: "pera",
                 boxWeight: "18-20 kg",
                 image: "https://images.unsplash.com/photo-1514756331096-242fdeb70d4a?w=200&h=200&fit=crop"
             },
@@ -1142,10 +1171,7 @@
                 id: 19,
                 name: "Tejocote",
                 category: "Fruta",
-                minPriceKg: 25,
-                maxPriceKg: 40,
-                minPriceBox: 450,
-                maxPriceBox: 550,
+                priceKey: "tejocote",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1546630392-36a4c2748258?w=200&h=200&fit=crop"
             },
@@ -1153,10 +1179,7 @@
                 id: 20,
                 name: "Coco",
                 category: "Fruta",
-                minPriceKg: 20,
-                maxPriceKg: 25,
-                minPriceBox: 250,
-                maxPriceBox: 300,
+                priceKey: "coco",
                 boxWeight: "12 piezas",
                 image: "https://images.unsplash.com/photo-1580984969071-a8da5656c2fb?w=200&h=200&fit=crop"
             },
@@ -1164,10 +1187,7 @@
                 id: 21,
                 name: "Caña",
                 category: "Otro",
-                minPriceKg: 10,
-                maxPriceKg: 15,
-                minPriceBox: 180,
-                maxPriceBox: 250,
+                priceKey: "cana",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1607962612857-3d846b881654?w=200&h=200&fit=crop"
             },
@@ -1175,10 +1195,7 @@
                 id: 22,
                 name: "Piña",
                 category: "Fruta",
-                minPriceKg: 12,
-                maxPriceKg: 18,
-                minPriceBox: 140,
-                maxPriceBox: 180,
+                priceKey: "pina",
                 boxWeight: "8-10 kg",
                 image: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=200&h=200&fit=crop"
             },
@@ -1186,10 +1203,7 @@
                 id: 23,
                 name: "Jamaica (flor)",
                 category: "Otro",
-                minPriceKg: 80,
-                maxPriceKg: 110,
-                minPriceBox: 800,
-                maxPriceBox: 1100,
+                priceKey: "jamaica",
                 boxWeight: "10 kg",
                 image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&h=200&fit=crop"
             },
@@ -1197,10 +1211,7 @@
                 id: 24,
                 name: "Azúcar",
                 category: "Otro",
-                minPriceKg: 18,
-                maxPriceKg: 22,
-                minPriceBox: 360,
-                maxPriceBox: 440,
+                priceKey: "azucar",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1587130413853-3c0a5c91c75e?w=200&h=200&fit=crop"
             },
@@ -1208,10 +1219,7 @@
                 id: 25,
                 name: "Tamarindo",
                 category: "Fruta",
-                minPriceKg: 25,
-                maxPriceKg: 35,
-                minPriceBox: 450,
-                maxPriceBox: 550,
+                priceKey: "tamarindo",
                 boxWeight: "20 kg",
                 image: "https://images.unsplash.com/photo-1543076499-a6133cb561c0?w=200&h=200&fit=crop"
             }
@@ -1221,6 +1229,7 @@
         let cart = [];
         let selectedCategory = 'all';
         let selectedPaymentMethod = 'transferencia';
+        let PRODUCT_PRICES = {}; // Se cargará dinámicamente
         
         // Elementos del DOM
         const productCatalog = document.getElementById('productCatalog');
@@ -1245,6 +1254,7 @@
         const modalConfirm = document.getElementById('modalConfirm');
         const mapContainer = document.getElementById('mapContainer');
         const mapIframe = document.getElementById('mapIframe');
+        const loadingOverlay = document.getElementById('loadingOverlay');
         
         // Campos de dirección
         const street = document.getElementById('street');
@@ -1261,12 +1271,144 @@
         const addressGroup = document.getElementById('addressGroup');
         const streetGroup = document.getElementById('streetGroup');
         
+        // ============================================
+        // FUNCIONES PARA GESTIÓN DE PRECIOS
+        // ============================================
+        
+        // Cargar precios desde el Gist
+        async function loadPricesFromGist() {
+            try {
+                showLoading(true);
+                
+                const response = await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
+                    headers: {
+                        'Authorization': `token ${GIST_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                const gistData = await response.json();
+                const fileContent = gistData.files[GIST_CONFIG.filename].content;
+                PRODUCT_PRICES = JSON.parse(fileContent);
+                
+                showLoading(false);
+                showNotification('Precios cargados correctamente');
+                renderProducts();
+                
+            } catch (error) {
+                console.error('Error al cargar precios:', error);
+                showLoading(false);
+                showNotification('Error al cargar precios. Usando precios predeterminados.', true);
+                
+                // Precios de respaldo
+                PRODUCT_PRICES = {
+                    sandia: { kg: 5, caja: 120 },
+                    melon: { kg: 8, caja: 280 },
+                    guayaba: { kg: 25, caja: 180 },
+                    naranja: { kg: 10, caja: 180 },
+                    toronja: { kg: 10, caja: 180 },
+                    aguacate: { kg: 45, caja: 800 },
+                    mandarina: { kg: 12, caja: 200 },
+                    manzana: { kg: 35, caja: 900 },
+                    uva: { kg: 45, caja: 300 },
+                    pera: { kg: 35, caja: 500 },
+                    tejocote: { kg: 25, caja: 450 },
+                    coco: { kg: 20, caja: 250 },
+                    pina: { kg: 12, caja: 140 },
+                    tamarindo: { kg: 25, caja: 450 },
+                    pepino: { kg: 12, caja: 150 },
+                    jicama: { kg: 20, caja: 350 },
+                    zanahoria: { kg: 12, caja: 180 },
+                    betabel: { kg: 15, caja: 220 },
+                    lechuga: { kg: 12, caja: 140 },
+                    apio: { kg: 20, caja: 120 },
+                    hierbabuena: { kg: 6, caja: 120 },
+                    jengibre: { kg: 60, caja: 750 },
+                    cana: { kg: 10, caja: 180 },
+                    jamaica: { kg: 80, caja: 800 },
+                    azucar: { kg: 18, caja: 360 }
+                };
+                
+                renderProducts();
+            }
+        }
+        
+        // Actualizar precios en el Gist
+        async function updatePricesInGist(newPrices) {
+            try {
+                showLoading(true);
+                
+                // Obtener el Gist actual
+                const response = await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
+                    headers: {
+                        'Authorization': `token ${GIST_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                const gistData = await response.json();
+                const currentSha = gistData.files[GIST_CONFIG.filename].sha;
+                
+                // Actualizar el archivo
+                const updateResponse = await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `token ${GIST_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: gistData.description,
+                        files: {
+                            [GIST_CONFIG.filename]: {
+                                filename: GIST_CONFIG.filename,
+                                content: JSON.stringify(newPrices, null, 2),
+                                sha: currentSha
+                            }
+                        }
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    PRODUCT_PRICES = newPrices;
+                    renderProducts();
+                    showLoading(false);
+                    showNotification('Precios actualizados correctamente');
+                    return true;
+                } else {
+                    throw new Error('Error al actualizar');
+                }
+                
+            } catch (error) {
+                console.error('Error al actualizar precios:', error);
+                showLoading(false);
+                showNotification('Error al actualizar precios', true);
+                return false;
+            }
+        }
+        
+        // Mostrar/ocultar loading
+        function showLoading(show) {
+            if (show) {
+                loadingOverlay.classList.add('active');
+            } else {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+        
+        // ============================================
+        // FUNCIONES PRINCIPALES DE LA APLICACIÓN
+        // ============================================
+        
         // Inicializar la aplicación
         function init() {
-            renderProducts();
+            loadPricesFromGist();
             setupEventListeners();
             updateCartUI();
             updateOrderDate();
+            
+            // Recargar precios cada 5 minutos para mantener actualizado
+            setInterval(loadPricesFromGist, 5 * 60 * 1000);
         }
         
         // Renderizar productos en el catálogo
@@ -1278,12 +1420,9 @@
                 : products.filter(product => product.category === selectedCategory);
             
             filteredProducts.forEach(product => {
+                const prices = getProductPrices(product.priceKey);
                 const productItem = document.createElement('div');
                 productItem.className = 'product-item';
-                
-                // Calcular precios promedio
-                const avgPriceKg = (product.minPriceKg + product.maxPriceKg) / 2;
-                const avgPriceBox = (product.minPriceBox + product.maxPriceBox) / 2;
                 
                 productItem.innerHTML = `
                     <img src="${product.image}" alt="${product.name}" class="product-image">
@@ -1293,11 +1432,11 @@
                         <div class="product-prices">
                             <div class="price">
                                 <span class="price-label">Por kg:</span>
-                                <span class="price-value">$${product.minPriceKg} - $${product.maxPriceKg}</span>
+                                <span class="price-value">$${prices.kg}</span>
                             </div>
                             <div class="price">
                                 <span class="price-label">Por caja:</span>
-                                <span class="price-value">$${product.minPriceBox} - $${product.maxPriceBox}</span>
+                                <span class="price-value">$${prices.caja}</span>
                             </div>
                         </div>
                     </div>
@@ -1581,6 +1720,15 @@
             return isValid;
         }
         
+        // ============================================
+        // FUNCIONES DEL CARRITO
+        // ============================================
+        
+        // Función para obtener precios
+        function getProductPrices(priceKey) {
+            return PRODUCT_PRICES[priceKey] || { kg: 0, caja: 0 };
+        }
+        
         // Agregar producto al carrito
         function addToCart(productId) {
             const product = products.find(p => p.id === productId);
@@ -1588,12 +1736,12 @@
             // Determinar si se seleccionó kg o caja
             const selectedUnit = document.querySelector(`.unit-option.selected[data-id="${productId}"]`).getAttribute('data-unit');
             
-            // Calcular precio promedio según la unidad seleccionada
+            // Usar el precio mínimo según la unidad seleccionada
             let price;
             if (selectedUnit === 'kg') {
-                price = (product.minPriceKg + product.maxPriceKg) / 2;
+                price = getProductPrices(product.priceKey).kg;
             } else {
-                price = (product.minPriceBox + product.maxPriceBox) / 2;
+                price = getProductPrices(product.priceKey).caja;
             }
             
             // Verificar si el producto ya está en el carrito con la misma unidad
@@ -1647,9 +1795,9 @@
                 // Calcular nuevo precio según la unidad
                 let newPrice;
                 if (newUnit === 'kg') {
-                    newPrice = (product.minPriceKg + product.maxPriceKg) / 2;
+                    newPrice = getProductPrices(product.priceKey).kg;
                 } else {
-                    newPrice = (product.minPriceBox + product.maxPriceBox) / 2;
+                    newPrice = getProductPrices(product.priceKey).caja;
                 }
                 
                 // Verificar si ya existe un producto con la nueva unidad
