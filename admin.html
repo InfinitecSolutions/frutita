@@ -5,9 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Frutita</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
-        h1 { color: #4CAF50; text-align: center; margin-bottom: 1.5rem; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding-top: 2rem; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+        
+        /* --- NUEVOS ESTILOS PARA EL HEADER Y FILTROS --- */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        .admin-header h1 { 
+            color: #4CAF50; 
+            margin: 0;
+        }
+        .product-count {
+            background-color: #e9f7ef;
+            color: #155724;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .category-filter {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .category-filter:hover {
+            background-color: #e9ecef;
+        }
+        .category-filter.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        /* --- FIN DE LOS NUEVOS ESTILOS --- */
+
         .product-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
         .product-card h3 { margin-top: 0; color: #333; }
         .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -25,7 +73,18 @@
 <body>
 
     <div class="container">
-        <h1>Panel de Precios 🍓</h1>
+        <!-- --- NUEVO HEADER CON TÍTULO Y CONTADOR --- -->
+        <div class="admin-header">
+            <h1>Panel de Precios 🍓</h1>
+            <span class="product-count" id="productCount">0 productos</span>
+        </div>
+        
+        <!-- --- NUEVA SECCIÓN DE FILTROS DE CATEGORÍA --- -->
+        <div class="category-filters" id="categoryFiltersAdmin">
+            <button class="category-filter active" data-category="all">Todos</button>
+            <!-- Los botones de categoría se generarán dinámicamente aquí -->
+        </div>
+
         <form id="price-form">
             <div id="product-list">
                 <!-- Los productos se cargarán aquí dinámicamente -->
@@ -40,14 +99,19 @@
         const CONFIG = {
             gistId: '7796cbf91e8445723bed7b2264747f4a',
             // Pega aquí tu Token de Activación (Grano Fino) que empieza con github_pat_
-            githubToken: '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' 
+            githubToken: 'github_pat_PEGA_AQUI_EL_TOKEN_DE_ACTIVACION' 
         };
         // ---------------------
 
+        // --- NUEVAS VARIABLES DE ESTADO Y ELEMENTOS DEL DOM ---
+        let selectedCategory = 'all';
+        let fullProductData = {};
         const form = document.getElementById('price-form');
         const productList = document.getElementById('product-list');
         const statusDiv = document.getElementById('status');
-        let fullProductData = {};
+        const categoryFiltersAdmin = document.getElementById('categoryFiltersAdmin');
+        const productCountSpan = document.getElementById('productCount');
+        // ----------------------------------------------------
 
         // Cargar todos los datos del Gist
         async function fetchProductData() {
@@ -57,7 +121,7 @@
             return fileContent;
         }
 
-        // Enviar la solicitud de actualización al workflow usando el Token de Activación
+        // Enviar la solicitud de actualización al workflow
         async function triggerUpdate(newData) {
             statusDiv.textContent = 'Enviando actualización...';
             statusDiv.className = '';
@@ -67,7 +131,7 @@
                 headers: {
                     'Authorization': `token ${CONFIG.githubToken}`,
                     'Content-Type': 'application/json',
-                    'Accept': 'application/vnd.github.everest-preview+json' // Header necesario para este endpoint
+                    'Accept': 'application/vnd.github.everest-preview+json'
                 },
                 body: JSON.stringify({
                     event_type: 'update_prices',
@@ -86,11 +150,36 @@
             }
         }
 
-        // Crear la interfaz para cada producto
+        // --- NUEVA FUNCIÓN PARA POBLAR LOS FILTROS DE CATEGORÍA ---
+        function populateCategoryFilters(products) {
+            const categories = new Set();
+            Object.values(products).forEach(product => {
+                if (product.category) {
+                    categories.add(product.category);
+                }
+            });
+
+            categoryFiltersAdmin.innerHTML = '<button class="category-filter active" data-category="all">Todos</button>';
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.className = 'category-filter';
+                button.setAttribute('data-category', category);
+                button.textContent = category;
+                categoryFiltersAdmin.appendChild(button);
+            });
+        }
+
+        // --- FUNCIÓN MODIFICADA PARA FILTRAR Y CREAR TARJETAS ---
         function createProductCards(products) {
             productList.innerHTML = '';
-            for (const productName in products) {
-                const product = products[productName];
+            
+            // Filtrar productos según la categoría seleccionada
+            const filteredProducts = selectedCategory === 'all' 
+                ? products 
+                : Object.fromEntries(Object.entries(products).filter(([name, product]) => product.category === selectedCategory));
+
+            for (const productName in filteredProducts) {
+                const product = filteredProducts[productName];
                 const card = document.createElement('div');
                 card.className = 'product-card';
 
@@ -111,6 +200,25 @@
             }
         }
 
+        // --- NUEVO EVENT LISTENER PARA LOS FILTROS ---
+        function setupCategoryFilterListeners() {
+            categoryFiltersAdmin.addEventListener('click', (e) => {
+                if (e.target.classList.contains('category-filter')) {
+                    // Remover clase active de todos los filtros
+                    document.querySelectorAll('.category-filter').forEach(filter => {
+                        filter.classList.remove('active');
+                    });
+                    
+                    // Agregar clase active al filtro seleccionado
+                    e.target.classList.add('active');
+                    
+                    // Actualizar categoría seleccionada y volver a renderizar
+                    selectedCategory = e.target.getAttribute('data-category');
+                    createProductCards(fullProductData);
+                }
+            });
+        }
+
         // Cargar productos al iniciar la página
         window.addEventListener('DOMContentLoaded', async () => {
             if (CONFIG.githubToken === 'github_pat_PEGA_AQUI_EL_TOKEN_DE_ACTIVACION') {
@@ -120,7 +228,17 @@
             }
             try {
                 fullProductData = await fetchProductData();
+                
+                // Actualizar el contador de productos
+                productCountSpan.textContent = `${Object.keys(fullProductData).length} productos`;
+
+                // Poblar los filtros de categoría y crear las tarjetas iniciales
+                populateCategoryFilters(fullProductData);
                 createProductCards(fullProductData);
+                
+                // Configurar los listeners para los filtros
+                setupCategoryFilterListeners();
+
             } catch (error) {
                 statusDiv.textContent = 'Error al cargar los datos desde Gist.';
                 statusDiv.className = 'error';
@@ -132,10 +250,11 @@
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             
+            // Crear el objeto de productos actualizado con TODOS los productos, no solo los filtrados
             const updatedData = {};
             for (const productName in fullProductData) {
                 updatedData[productName] = {
-                    ...fullProductData[productName],
+                    ...fullProductData[productName], // Copia todos los datos antiguos
                     minPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value),
                     maxPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value),
                     minPriceBox: parseFloat(event.target.elements[`${productName}_minPriceBox`].value),
