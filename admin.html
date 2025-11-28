@@ -128,16 +128,18 @@
                 const product = filteredProducts[productName];
                 const card = document.createElement('div');
                 card.className = 'product-card';
+
+                // --- CAMBIO CLAVE: Usamos el operador '||' para dar un valor por defecto si el precio es 'undefined' ---
                 card.innerHTML = `
                     <h3>${productName}</h3>
                     <div class="price-inputs">
                         <div class="form-group">
                             <label>Precio por Kg ($)</label>
-                            <input type="number" name="${productName}_minPriceKg" value="${product.minPriceKg}" step="0.01" required>
+                            <input type="number" name="${productName}_minPriceKg" value="${product.minPriceKg || ''}" step="0.01" required>
                         </div>
                         <div class="form-group">
                             <label>Precio por Caja ($)</label>
-                            <input type="number" name="${productName}_minPriceBox" value="${product.minPriceBox}" step="0.01" required>
+                            <input type="number" name="${productName}_minPriceBox" value="${product.minPriceBox || ''}" step="0.01" required>
                         </div>
                     </div>
                 `;
@@ -177,16 +179,22 @@
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
+            
             const updatedData = {};
             for (const productName in fullProductData) {
+                // --- CAMBIO CLAVE: Usamos 'parseFloat' con '|| 0' para manejar campos vacíos y evitar 'NaN' ---
+                const kgPrice = parseFloat(event.target.elements[`${productName}_minPriceKg`].value) || 0;
+                const boxPrice = parseFloat(event.target.elements[`${productName}_minPriceBox`].value) || 0;
+
                 updatedData[productName] = {
                     ...fullProductData[productName],
-                    minPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value),
-                    maxPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value),
-                    minPriceBox: parseFloat(event.target.elements[`${productName}_minPriceBox`].value),
-                    maxPriceBox: parseFloat(event.target.elements[`${productName}_minPriceBox`].value),
+                    minPriceKg: kgPrice,
+                    maxPriceKg: kgPrice, // O puedes tener un campo separado si quieres
+                    minPriceBox: boxPrice,
+                    maxPriceBox: boxPrice, // O puedes tener un campo separado
                 };
             }
+
             await triggerUpdate(updatedData);
         });
     </script>
