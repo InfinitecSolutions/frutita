@@ -39,8 +39,8 @@
         // --- CONFIGURACIÓN ---
         const CONFIG = {
             gistId: '7796cbf91e8445723bed7b2264747f4a',
-            // Pega aquí tu Token de Acceso Personal de GitHub
-            githubToken: 'Pega_Aqui_Tu_Token' 
+            // Pega aquí tu Token de Activación (Grano Fino) que empieza con github_pat_
+            githubToken: 'github_pat_PEGA_AQUI_EL_TOKEN_DE_ACTIVACION' 
         };
         // ---------------------
 
@@ -57,7 +57,7 @@
             return fileContent;
         }
 
-        // Enviar la solicitud de actualización al workflow
+        // Enviar la solicitud de actualización al workflow usando el Token de Activación
         async function triggerUpdate(newData) {
             statusDiv.textContent = 'Enviando actualización...';
             statusDiv.className = '';
@@ -67,7 +67,7 @@
                 headers: {
                     'Authorization': `token ${CONFIG.githubToken}`,
                     'Content-Type': 'application/json',
-                    'Accept': 'application/vnd.github.everest-preview+json'
+                    'Accept': 'application/vnd.github.everest-preview+json' // Header necesario para este endpoint
                 },
                 body: JSON.stringify({
                     event_type: 'update_prices',
@@ -113,8 +113,8 @@
 
         // Cargar productos al iniciar la página
         window.addEventListener('DOMContentLoaded', async () => {
-            if (CONFIG.githubToken === 'Pega_Aqui_Tu_Token') {
-                statusDiv.textContent = 'Error: Debes pegar tu Token de Acceso Personal en el archivo admin.html';
+            if (CONFIG.githubToken === 'github_pat_PEGA_AQUI_EL_TOKEN_DE_ACTIVACION') {
+                statusDiv.textContent = 'Error: Debes pegar tu Token de Activación en el archivo admin.html';
                 statusDiv.className = 'error';
                 return;
             }
@@ -132,15 +132,14 @@
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             
-            // Crear el objeto de productos actualizado
             const updatedData = {};
             for (const productName in fullProductData) {
                 updatedData[productName] = {
-                    ...fullProductData[productName], // Copia todos los datos antiguos (imagen, categoría, etc.)
+                    ...fullProductData[productName],
                     minPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value),
-                    maxPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value), // O puedes tener un campo separado si quieres
+                    maxPriceKg: parseFloat(event.target.elements[`${productName}_minPriceKg`].value),
                     minPriceBox: parseFloat(event.target.elements[`${productName}_minPriceBox`].value),
-                    maxPriceBox: parseFloat(event.target.elements[`${productName}_minPriceBox`].value), // O puedes tener un campo separado
+                    maxPriceBox: parseFloat(event.target.elements[`${productName}_minPriceBox`].value),
                 };
             }
 
