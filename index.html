@@ -122,20 +122,62 @@
             font-size: 1.1rem;
         }
         
-        /* Filtros de categoría - Fijos */
-        .category-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            justify-content: center;
+        /* Contenedor Sticky para Búsqueda y Filtros */
+        .sticky-filters-container {
             position: sticky;
-            top: 70px;
+            top: 70px; /* Alineado con la parte inferior del header */
             background-color: rgba(255, 255, 255, 0.9);
             padding: 1rem;
             border-radius: 10px;
             z-index: 90;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        /* Barra de Búsqueda */
+        .search-bar-container {
+            margin-bottom: 1rem; /* Espacio entre la búsqueda y los filtros */
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            padding-right: 3rem; /* Espacio para el botón de limpiar */
+            font-size: 1rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 50px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        .clear-search-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none; /* Oculto por defecto */
+        }
+        
+        .search-input:not(:placeholder-shown) ~ .clear-search-btn {
+            display: block; /* Se muestra cuando hay texto */
+        }
+
+        /* Filtros de categoría */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
         }
         
         .category-filter {
@@ -234,6 +276,30 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 0.5rem;
+        }
+
+        /* Controles de cantidad en el catálogo */
+        .product-quantity-controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-quantity-input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            padding: 0.2rem;
+            margin: 0 0.5rem;
+            font-size: 0.9rem;
+            -moz-appearance: textfield; /* Firefox */
+        }
+        
+        .product-quantity-input::-webkit-outer-spin-button,
+        .product-quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         
         .product-options {
@@ -444,27 +510,6 @@
         .unit-selector {
             display: flex;
             margin-right: 1rem;
-        }
-        
-        .unit-option {
-            padding: 0.2rem 0.5rem;
-            border: 1px solid var(--light-gray);
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        
-        .unit-option:first-child {
-            border-radius: 5px 0 0 5px;
-        }
-        
-        .unit-option:last-child {
-            border-radius: 0 5px 5px 0;
-        }
-        
-        .unit-option.selected {
-            background-color: var(--light-green);
-            color: var(--white);
-            border-color: var(--light-green);
         }
         
         .cart-item-price {
@@ -825,15 +870,25 @@
             <h1>¡Frutas y verduras frescas directamente a tu puerta!</h1>
             <p>Los productos más frescos de la región, seleccionados especialmente para ti</p>
         </section>
-        
-        <section class="category-filters" id="categoryFilters">
-            <button class="category-filter active" data-category="all">Todos</button>
-            <button class="category-filter" data-category="Fruta">Frutas</button>
-            <button class="category-filter" data-category="Hortaliza">Hortalizas</button>
-            <button class="category-filter" data-category="Hierba">Hierbas</button>
-            <button class="category-filter" data-category="Raíz">Raíces</button>
-            <button class="category-filter" data-category="Otro">Otros</button>
-        </section>
+
+        <!-- NUEVO CONTENEDOR STICKY PARA BÚSQUEDA Y FILTROS -->
+        <div class="sticky-filters-container">
+            <!-- Barra de Búsqueda -->
+            <div class="search-bar-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar productos por nombre...">
+                <button id="clearSearchBtn" class="clear-search-btn">&times;</button>
+            </div>
+            
+            <!-- Filtros de categoría -->
+            <section class="category-filters" id="categoryFilters">
+                <button class="category-filter active" data-category="all">Todos</button>
+                <button class="category-filter" data-category="Fruta">Frutas</button>
+                <button class="category-filter" data-category="Hortaliza">Hortalizas</button>
+                <button class="category-filter" data-category="Hierba">Hierbas</button>
+                <button class="category-filter" data-category="Raíz">Raíces</button>
+                <button class="category-filter" data-category="Otro">Otros</button>
+            </section>
+        </div>
         
         <section class="catalog" id="productCatalog">
             <!-- Los productos se generarán dinámicamente con JavaScript -->
@@ -961,13 +1016,52 @@
         let selectedCategory = 'all';
         let selectedPaymentMethod = 'transferencia';
         
-        // Datos de productos que se cargarán desde el Gist
-        let products = [];
-        let currentPrices = {};
+        // Datos de productos con precios y categorías
+        const productsData = {
+            "Lechuga": { category: "Hortaliza", pricePerPiece: 12, pricePerBox: 140, boxContent: "12 piezas", unitType: "pieza" },
+            "Coco": { category: "Fruta", pricePerPiece: 20, pricePerBox: 250, boxContent: "12 piezas", unitType: "pieza" },
+            "Hierbabuena": { category: "Hierba", pricePerPiece: 6, pricePerBox: 120, boxContent: "20 manojos", unitType: "manojo" },
+            "Sandía": { category: "Fruta", pricePerKg: 5, pricePerBox: 120, boxContent: "20-25 kg", unitType: "kg" },
+            "Melón": { category: "Fruta", pricePerKg: 8, pricePerBox: 280, boxContent: "30-35 kg", unitType: "kg" },
+            "Pepino": { category: "Hortaliza", pricePerKg: 12, pricePerBox: 150, boxContent: "25 kg", unitType: "kg" },
+            "Jícama": { category: "Hortaliza", pricePerKg: 20, pricePerBox: 350, boxContent: "20 kg", unitType: "kg" },
+            "Zanahoria": { category: "Hortaliza", pricePerKg: 12, pricePerBox: 180, boxContent: "20 kg", unitType: "kg" },
+            "Betabel": { category: "Hortaliza", pricePerKg: 15, pricePerBox: 220, boxContent: "20 kg", unitType: "kg" },
+            "Guayaba": { category: "Fruta", pricePerKg: 25, pricePerBox: 180, boxContent: "10 kg", unitType: "kg" },
+            "Naranja": { category: "Fruta", pricePerKg: 10, pricePerBox: 180, boxContent: "20 kg", unitType: "kg" },
+            "Toronja": { category: "Fruta", pricePerKg: 10, pricePerBox: 180, boxContent: "20 kg", unitType: "kg" },
+            "Aguacate": { category: "Fruta", pricePerKg: 45, pricePerBox: 800, boxContent: "20 kg", unitType: "kg" },
+            "Apio": { category: "Hortaliza", pricePerKg: 20, pricePerBox: 120, boxContent: "8 kg en manojos", unitType: "kg" },
+            "Jengibre": { category: "Raíz", pricePerKg: 60, pricePerBox: 750, boxContent: "10 kg", unitType: "kg" },
+            "Mandarina": { category: "Fruta", pricePerKg: 12, pricePerBox: 200, boxContent: "20 kg", unitType: "kg" },
+            "Manzana": { category: "Fruta", pricePerKg: 35, pricePerBox: 900, boxContent: "18-20 kg", unitType: "kg" },
+            "Uva": { category: "Fruta", pricePerKg: 45, pricePerBox: 300, boxContent: "8 kg", unitType: "kg" },
+            "Pera": { category: "Fruta", pricePerKg: 35, pricePerBox: 500, boxContent: "18-20 kg", unitType: "kg" },
+            "Tejocote": { category: "Fruta", pricePerKg: 25, pricePerBox: 450, boxContent: "20 kg", unitType: "kg" },
+            "Caña": { category: "Otro", pricePerKg: 10, pricePerBox: 180, boxContent: "20 kg", unitType: "kg" },
+            "Piña": { category: "Fruta", pricePerKg: 12, pricePerBox: 140, boxContent: "8-10 kg", unitType: "kg" },
+            "Jamaica (flor)": { category: "Otro", pricePerKg: 80, pricePerBox: 800, boxContent: "10 kg", unitType: "kg" },
+            "Azúcar": { category: "Otro", pricePerKg: 18, pricePerBox: 360, boxContent: "20 kg", unitType: "kg" },
+            "Tamarindo": { category: "Fruta", pricePerKg: 25, pricePerBox: 450, boxContent: "20 kg", unitType: "kg" }
+        };
         
-        // Configuración del Gist
-        const GIST_ID = '7796cbf91e8445723bed7b2264747f4a';
-        const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+        // Convertir los datos a un array de productos para facilitar el manejo
+        let products = Object.keys(productsData).map(name => {
+            const id = name.toLowerCase().replace(/\s+/g, '-');
+            // Genera una URL de imagen única y confiable para cada producto
+            const imageUrl = `https://via.placeholder.com/80x80/4CAF50/FFFFFF?text=${encodeURIComponent(name)}`;
+            return {
+                id: id,
+                name: name,
+                category: productsData[name].category,
+                unitType: productsData[name].unitType,
+                pricePerKg: productsData[name].pricePerKg || 0,
+                pricePerPiece: productsData[name].pricePerPiece || 0,
+                pricePerBox: productsData[name].pricePerBox || 0,
+                boxContent: productsData[name].boxContent || "",
+                image: imageUrl
+            };
+        });
         
         // Elementos del DOM
         const productCatalog = document.getElementById('productCatalog');
@@ -1007,6 +1101,10 @@
         const phoneGroup = document.getElementById('phoneGroup');
         const addressGroup = document.getElementById('addressGroup');
         const streetGroup = document.getElementById('streetGroup');
+
+        // Elementos de la barra de búsqueda
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
         
         // Función para mostrar notificación
         function showNotification(message, isError = false) {
@@ -1024,50 +1122,73 @@
             }, 3000);
         }
         
-        // Función para cargar los productos desde el Gist
-        async function fetchProducts() {
-            try {
-                const response = await fetch(GIST_API_URL);
-                if (!response.ok) throw new Error('No se pudieron cargar los productos.');
-                const data = await response.json();
-                const fileContent = JSON.parse(Object.values(data.files)[0].content);
-                
-                // Compara los precios nuevos con los actuales para mostrar notificación
-                if (Object.keys(currentPrices).length > 0 && JSON.stringify(currentPrices) !== JSON.stringify(fileContent)) {
-                    showNotification('¡Los precios han sido actualizados!', false);
-                }
-                
-                currentPrices = fileContent;
-                products = Object.keys(fileContent).map(name => ({
-                    id: name.toLowerCase().replace(/\s+/g, '-'),
-                    name: name,
-                    category: fileContent[name].category || "Otro",
-                    minPriceKg: fileContent[name].minPriceKg || 0,
-                    maxPriceKg: fileContent[name].maxPriceKg || 0,
-                    minPriceBox: fileContent[name].minPriceBox || 0,
-                    maxPriceBox: fileContent[name].maxPriceBox || 0,
-                    boxWeight: fileContent[name].boxWeight || "",
-                    image: fileContent[name].image || ""
-                }));
-                
-                renderProducts();
-            } catch (error) {
-                console.error('Error al obtener productos:', error);
-                showNotification('Error al cargar los productos. Intenta de nuevo más tarde.', true);
+        // Función maestra para aplicar todos los filtros (categoría y búsqueda)
+        function applyAllFilters() {
+            let filteredProducts = products;
+
+            // Filtrar por categoría
+            if (selectedCategory !== 'all') {
+                filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
             }
+
+            // Filtrar por término de búsqueda
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if (searchTerm) {
+                filteredProducts = filteredProducts.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderProducts(filteredProducts);
         }
         
         // Renderizar productos en el catálogo
-        function renderProducts() {
+        function renderProducts(productsToRender) {
             productCatalog.innerHTML = '';
             
-            const filteredProducts = selectedCategory === 'all' 
-                ? products 
-                : products.filter(product => product.category === selectedCategory);
+            if (productsToRender.length === 0) {
+                productCatalog.innerHTML = '<p style="text-align: center; width: 100%; color: var(--gray);">No se encontraron productos.</p>';
+                return;
+            }
             
-            filteredProducts.forEach(product => {
+            productsToRender.forEach(product => {
                 const productItem = document.createElement('div');
                 productItem.className = 'product-item';
+                
+                let priceDisplay = '';
+                let unitOptions = '';
+                
+                if (product.unitType === 'kg') {
+                    priceDisplay = `
+                        <div class="price">
+                            <span class="price-label">Por kg:</span>
+                            <span class="price-value">$${product.pricePerKg}</span>
+                        </div>
+                        <div class="price">
+                            <span class="price-label">Por caja:</span>
+                            <span class="price-value">$${product.pricePerBox}</span>
+                        </div>
+                    `;
+                    unitOptions = `
+                        <div class="unit-option selected" data-unit="kg" data-id="${product.id}">Por kg</div>
+                        <div class="unit-option" data-unit="box" data-id="${product.id}">Por caja</div>
+                    `;
+                } else {
+                    priceDisplay = `
+                        <div class="price">
+                            <span class="price-label">Por ${product.unitType}:</span>
+                            <span class="price-value">$${product.pricePerPiece}</span>
+                        </div>
+                        <div class="price">
+                            <span class="price-label">Por caja:</span>
+                            <span class="price-value">$${product.pricePerBox}</span>
+                        </div>
+                    `;
+                    unitOptions = `
+                        <div class="unit-option selected" data-unit="${product.unitType}" data-id="${product.id}">Por ${product.unitType}</div>
+                        <div class="unit-option" data-unit="box" data-id="${product.id}">Por caja</div>
+                    `;
+                }
                 
                 productItem.innerHTML = `
                     <img src="${product.image}" alt="${product.name}" class="product-image">
@@ -1075,20 +1196,17 @@
                         <h3 class="product-name">${product.name}</h3>
                         <div class="product-category">${product.category}</div>
                         <div class="product-prices">
-                            <div class="price">
-                                <span class="price-label">Por kg:</span>
-                                <span class="price-value">$${product.minPriceKg}</span>
-                            </div>
-                            <div class="price">
-                                <span class="price-label">Por caja:</span>
-                                <span class="price-value">$${product.minPriceBox}</span>
-                            </div>
+                            ${priceDisplay}
                         </div>
                     </div>
                     <div class="product-actions">
+                        <div class="product-quantity-controls">
+                            <button class="quantity-btn quantity-decrease" data-id="${product.id}">-</button>
+                            <input type="number" class="product-quantity-input" data-id="${product.id}" value="1" min="1" max="99">
+                            <button class="quantity-btn quantity-increase" data-id="${product.id}">+</button>
+                        </div>
                         <div class="product-options">
-                            <div class="unit-option selected" data-unit="kg" data-id="${product.id}">Por kg</div>
-                            <div class="unit-option" data-unit="box" data-id="${product.id}">Por caja</div>
+                            ${unitOptions}
                         </div>
                         <button class="add-to-cart" data-id="${product.id}">Agregar</button>
                     </div>
@@ -1100,58 +1218,105 @@
         
         // Configurar event listeners
         function setupEventListeners() {
+            // Event listener para la barra de búsqueda
+            searchInput.addEventListener('input', applyAllFilters);
+
+            // Event listener para el botón de limpiar búsqueda
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                applyAllFilters();
+            });
+            
             // Filtros de categoría
             categoryFilters.addEventListener('click', (e) => {
                 if (e.target.classList.contains('category-filter')) {
-                    // Remover clase active de todos los filtros
                     document.querySelectorAll('.category-filter').forEach(filter => {
                         filter.classList.remove('active');
                     });
-                    
-                    // Agregar clase active al filtro seleccionado
                     e.target.classList.add('active');
-                    
-                    // Actualizar categoría seleccionada y renderizar productos
                     selectedCategory = e.target.getAttribute('data-category');
-                    renderProducts();
+                    applyAllFilters(); // Usar la función maestra
                 }
             });
             
-            // Opciones de unidad (kg o caja)
-            document.addEventListener('click', (e) => {
+            // Opciones de unidad (kg, pieza, manojo o caja) en el catálogo principal
+            productCatalog.addEventListener('click', (e) => {
                 if (e.target.classList.contains('unit-option')) {
                     const productId = e.target.getAttribute('data-id');
-                    
-                    // Remover clase selected de todas las opciones del mismo producto
                     document.querySelectorAll(`.unit-option[data-id="${productId}"]`).forEach(option => {
                         option.classList.remove('selected');
                     });
-                    
-                    // Agregar clase selected a la opción seleccionada
                     e.target.classList.add('selected');
+                }
+            });
+
+            // Event listeners para los controles de cantidad en el catálogo
+            productCatalog.addEventListener('click', (e) => {
+                if (e.target.classList.contains('quantity-decrease')) {
+                    const productId = e.target.getAttribute('data-id');
+                    decreaseProductQuantity(productId);
+                }
+                if (e.target.classList.contains('quantity-increase')) {
+                    const productId = e.target.getAttribute('data-id');
+                    increaseProductQuantity(productId);
                 }
             });
             
             // Botones de agregar al carrito
-            document.addEventListener('click', (e) => {
+            productCatalog.addEventListener('click', (e) => {
                 if (e.target.classList.contains('add-to-cart')) {
                     const productId = e.target.getAttribute('data-id');
                     addToCart(productId);
                 }
             });
             
+            // INICIO DE LA SECCIÓN CRÍTICA CORREGIDA: DELEGACIÓN DE EVENTOS EN EL CARRITO
+            cartItems.addEventListener('click', (e) => {
+                const cartItemElement = e.target.closest('.cart-item');
+                if (!cartItemElement) return;
+
+                const productId = cartItemElement.querySelector('.cart-item-remove').getAttribute('data-id');
+                
+                if (e.target.classList.contains('unit-option')) {
+                    const newUnit = e.target.getAttribute('data-unit');
+                    const currentItem = cart.find(item => item.id === productId);
+                    if (!currentItem || currentItem.unit === newUnit) return;
+                    const oldUnit = currentItem.unit;
+                    changeUnit(productId, oldUnit, newUnit);
+                }
+
+                if (e.target.classList.contains('cart-item-remove')) {
+                    const unitToRemove = e.target.getAttribute('data-unit');
+                    removeFromCart(productId, unitToRemove);
+                }
+
+                if (e.target.classList.contains('quantity-decrease')) {
+                    const unit = e.target.getAttribute('data-unit');
+                    const item = cart.find(i => i.id === productId && i.unit === unit);
+                    if (item && item.quantity > 1) {
+                        updateQuantity(productId, unit, item.quantity - 1);
+                    } else if (item) {
+                        removeFromCart(productId, unit);
+                    }
+                }
+
+                if (e.target.classList.contains('quantity-increase')) {
+                    const unit = e.target.getAttribute('data-unit');
+                    const item = cart.find(i => i.id === productId && i.unit === unit);
+                    if (item) {
+                        updateQuantity(productId, unit, item.quantity + 1);
+                    }
+                }
+            });
+            // FIN DE LA SECCIÓN CRÍTICA CORREGIDA
+
             // Opciones de pago
             document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('payment-option')) {
-                    // Remover clase selected de todas las opciones
                     document.querySelectorAll('.payment-option').forEach(option => {
                         option.classList.remove('selected');
                     });
-                    
-                    // Agregar clase selected a la opción seleccionada
                     e.target.classList.add('selected');
-                    
-                    // Actualizar método de pago seleccionado
                     selectedPaymentMethod = e.target.getAttribute('data-payment');
                 }
             });
@@ -1182,33 +1347,20 @@
                 }
             });
             
-            // Botón de ubicación - Mejorado con geocodificación inversa y mapa
+            // Botón de ubicación
             locationButton.addEventListener('click', () => {
-                // Mostrar notificación de carga
                 showNotification('Obteniendo tu ubicación...');
-                
-                // Usar la API de geolocalización del navegador
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         position => {
                             const lat = position.coords.latitude;
                             const lng = position.coords.longitude;
-                            
-                            // Mostrar mapa con la ubicación
                             showMap(lat, lng);
-                            
-                            // Usar la API de geocodificación inversa de Nominatim (OpenStreetMap)
-                            // Esta es una alternativa gratuita a Google Maps para obtener la dirección
                             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                                 .then(response => response.json())
                                 .then(data => {
-                                    // Extraer la dirección del resultado
                                     const address = data.display_name || `${lat}, ${lng}`;
-                                    
-                                    // Llenar el campo de dirección completa
                                     fullAddress.value = address;
-                                    
-                                    // Intentar extraer componentes de la dirección para llenar los campos separados
                                     const addressComponents = data.address;
                                     if (addressComponents) {
                                         street.value = addressComponents.road || '';
@@ -1218,70 +1370,43 @@
                                         state.value = addressComponents.state || '';
                                         zipCode.value = addressComponents.postcode || '';
                                     }
-                                    
-                                    // Eliminar errores de dirección
                                     addressGroup.classList.remove('error');
                                     streetGroup.classList.remove('error');
-                                    
-                                    // Mostrar notificación de éxito
                                     showNotification('Ubicación obtenida correctamente');
                                 })
                                 .catch(error => {
                                     console.error('Error al obtener la dirección:', error);
-                                    
-                                    // Si hay un error, abrir Google Maps con las coordenadas
                                     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
                                     window.open(googleMapsUrl, '_blank');
-                                    
-                                    // Mostrar notificación informativa
                                     showNotification('No se pudo obtener la dirección automáticamente, abre Google Maps para seleccionarla');
                                 });
                         },
                         error => {
                             console.error('Error al obtener la ubicación:', error);
-                            
-                            // Si hay un error al obtener la ubicación, abrir Google Maps para búsqueda manual
                             window.open('https://www.google.com/maps', '_blank');
                             showNotification('No se pudo obtener tu ubicación, busca tu dirección manualmente');
                         }
                     );
                 } else {
-                    // Si el navegador no soporta geolocalización, abrir Google Maps
                     window.open('https://www.google.com/maps', '_blank');
                     showNotification('Tu navegador no soporta geolocalización, busca tu dirección manualmente');
                 }
             });
             
-            // Abrir carrito
-            cartButton.addEventListener('click', () => {
-                cartOverlay.classList.add('active');
-            });
-            
-            // Cerrar carrito
-            closeCart.addEventListener('click', () => {
-                cartOverlay.classList.remove('active');
-            });
-            
-            // Cerrar carrito al hacer clic fuera
+            // Abrir/Cerrar carrito
+            cartButton.addEventListener('click', () => cartOverlay.classList.add('active'));
+            closeCart.addEventListener('click', () => cartOverlay.classList.remove('active'));
             cartOverlay.addEventListener('click', (e) => {
-                if (e.target === cartOverlay) {
-                    cartOverlay.classList.remove('active');
-                }
+                if (e.target === cartOverlay) cartOverlay.classList.remove('active');
             });
             
             // Vaciar carrito
             clearCart.addEventListener('click', () => {
-                if (cart.length > 0) {
-                    confirmationModal.classList.add('active');
-                }
+                if (cart.length > 0) confirmationModal.classList.add('active');
             });
             
-            // Modal de confirmación - Cancelar
-            modalCancel.addEventListener('click', () => {
-                confirmationModal.classList.remove('active');
-            });
-            
-            // Modal de confirmación - Confirmar
+            // Modal de confirmación
+            modalCancel.addEventListener('click', () => confirmationModal.classList.remove('active'));
             modalConfirm.addEventListener('click', () => {
                 cart = [];
                 updateCartUI();
@@ -1289,53 +1414,54 @@
                 cartOverlay.classList.remove('active');
                 showNotification('Carrito vaciado correctamente');
             });
-            
-            // Cerrar modal al hacer clic fuera
             confirmationModal.addEventListener('click', (e) => {
-                if (e.target === confirmationModal) {
-                    confirmationModal.classList.remove('active');
-                }
+                if (e.target === confirmationModal) confirmationModal.classList.remove('active');
             });
             
             // Botón de checkout
             checkoutButton.addEventListener('click', checkout);
         }
         
+        // Funciones para manejar la cantidad en el catálogo
+        function decreaseProductQuantity(productId) {
+            const input = document.querySelector(`.product-quantity-input[data-id="${productId}"]`);
+            let currentValue = parseInt(input.value, 10);
+            if (currentValue > 1) {
+                input.value = currentValue - 1;
+            }
+        }
+
+        function increaseProductQuantity(productId) {
+            const input = document.querySelector(`.product-quantity-input[data-id="${productId}"]`);
+            let currentValue = parseInt(input.value, 10);
+            if (currentValue < 99) { // Establecer un límite máximo
+                input.value = currentValue + 1;
+            }
+        }
+        
         // Mostrar mapa con las coordenadas
         function showMap(lat, lng) {
-            // Construir URL para el iframe de Google Maps
             const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${lat},${lng}&zoom=15`;
-            
-            // Actualizar el iframe con la URL
             mapIframe.src = mapUrl;
-            
-            // Mostrar el contenedor del mapa
             mapContainer.classList.add('active');
         }
         
         // Validar formulario con marcado de errores
         function validateForm() {
             let isValid = true;
-            
-            // Resetear todos los errores
             nameGroup.classList.remove('error');
             phoneGroup.classList.remove('error');
             addressGroup.classList.remove('error');
             streetGroup.classList.remove('error');
             
-            // Validar nombre
             if (!customerName.value.trim()) {
                 nameGroup.classList.add('error');
                 isValid = false;
             }
-            
-            // Validar teléfono
             if (!customerPhone.value.trim()) {
                 phoneGroup.classList.add('error');
                 isValid = false;
             }
-            
-            // Validar dirección (al menos calle o dirección completa)
             if (!street.value.trim() && !fullAddress.value.trim()) {
                 addressGroup.classList.add('error');
                 streetGroup.classList.add('error');
@@ -1345,43 +1471,43 @@
             if (!isValid) {
                 showNotification('Por favor, completa los campos marcados en rojo', true);
             }
-            
             return isValid;
         }
         
         // Agregar producto al carrito
         function addToCart(productId) {
             const product = products.find(p => p.id === productId);
-            
-            // Determinar si se seleccionó kg o caja
             const selectedUnit = document.querySelector(`.unit-option.selected[data-id="${productId}"]`).getAttribute('data-unit');
+            const quantityInput = document.querySelector(`.product-quantity-input[data-id="${productId}"]`);
+            const quantity = parseInt(quantityInput.value, 10) || 1;
             
-            // Usar el precio mínimo según la unidad seleccionada
             let price;
             if (selectedUnit === 'kg') {
-                price = product.minPriceKg;
+                price = product.pricePerKg;
+            } else if (selectedUnit === 'box') {
+                price = product.pricePerBox;
             } else {
-                price = product.minPriceBox;
+                price = product.pricePerPiece;
             }
             
-            // Verificar si el producto ya está en el carrito con la misma unidad
             const existingItem = cart.find(item => item.id === productId && item.unit === selectedUnit);
             
             if (existingItem) {
-                existingItem.quantity += 1;
+                existingItem.quantity += quantity;
             } else {
                 cart.push({
                     ...product,
-                    quantity: 1,
+                    quantity: quantity,
                     unit: selectedUnit,
                     price: price
                 });
             }
             
-            updateCartUI();
+            // Resetear la cantidad a 1 después de agregar
+            quantityInput.value = 1;
             
-            // Mostrar notificación temporal
-            showNotification(`${product.name} agregado al carrito`);
+            updateCartUI();
+            showNotification(`${quantity} ${product.unit === 'pieza' ? 'pieza(s)' : product.unit === 'manojo' ? 'manojo(s)' : (product.unit === 'kg' ? 'kg' : 'caja(s)')} de ${product.name} agregado(s) al carrito`);
         }
         
         // Eliminar producto del carrito
@@ -1393,7 +1519,6 @@
         // Actualizar cantidad de un producto en el carrito
         function updateQuantity(productId, unit, newQuantity) {
             const item = cart.find(item => item.id === productId && item.unit === unit);
-            
             if (item) {
                 if (newQuantity <= 0) {
                     removeFromCart(productId, unit);
@@ -1404,47 +1529,42 @@
             }
         }
         
-        // Cambiar unidad de un producto en el carrito
+        // Cambiar unidad de un producto en el carrito (Lógica mejorada y más clara)
         function changeUnit(productId, oldUnit, newUnit) {
             const itemIndex = cart.findIndex(item => item.id === productId && item.unit === oldUnit);
             
-            if (itemIndex !== -1) {
-                const item = cart[itemIndex];
-                const product = products.find(p => p.id === productId);
-                
-                // Calcular nuevo precio según la unidad
-                let newPrice;
-                if (newUnit === 'kg') {
-                    newPrice = product.minPriceKg;
-                } else {
-                    newPrice = product.minPriceBox;
-                }
-                
-                // Verificar si ya existe un producto con la nueva unidad
-                const existingItem = cart.find(i => i.id === productId && i.unit === newUnit);
-                
-                if (existingItem) {
-                    // Si ya existe, sumar las cantidades
-                    existingItem.quantity += item.quantity;
-                    // Eliminar el item original
-                    cart.splice(itemIndex, 1);
-                } else {
-                    // Si no existe, actualizar la unidad y el precio
-                    item.unit = newUnit;
-                    item.price = newPrice;
-                }
-                
-                updateCartUI();
+            if (itemIndex === -1) return;
+
+            const item = cart[itemIndex];
+            const product = products.find(p => p.id === productId);
+            
+            let newPrice;
+            if (newUnit === 'kg') {
+                newPrice = product.pricePerKg;
+            } else if (newUnit === 'box') {
+                newPrice = product.pricePerBox;
+            } else {
+                newPrice = product.pricePerPiece;
             }
+            
+            const existingItemIndex = cart.findIndex(i => i.id === productId && i.unit === newUnit);
+            
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += item.quantity;
+                cart.splice(itemIndex, 1);
+            } else {
+                item.unit = newUnit;
+                item.price = newPrice;
+            }
+            
+            updateCartUI();
         }
-        
-        // Actualizar la interfaz del carrito
+
+        // Actualizar la interfaz del carrito (Simplificada, ya no maneja eventos aquí)
         function updateCartUI() {
-            // Actualizar contador de productos
             const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
             cartCount.textContent = totalItems;
             
-            // Actualizar contenido del carrito
             if (cart.length === 0) {
                 cartItems.innerHTML = '<div class="empty-cart">Tu carrito está vacío</div>';
                 cartTotal.textContent = '$0.00';
@@ -1457,6 +1577,19 @@
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 total += itemTotal;
+                
+                let unitOptions = '';
+                if (item.unitType === 'kg') {
+                    unitOptions = `
+                        <div class="unit-option ${item.unit === 'kg' ? 'selected' : ''}" data-id="${item.id}" data-unit="kg">kg</div>
+                        <div class="unit-option ${item.unit === 'box' ? 'selected' : ''}" data-id="${item.id}" data-unit="box">caja</div>
+                    `;
+                } else {
+                    unitOptions = `
+                        <div class="unit-option ${item.unit === item.unitType ? 'selected' : ''}" data-id="${item.id}" data-unit="${item.unitType}">${item.unitType}</div>
+                        <div class="unit-option ${item.unit === 'box' ? 'selected' : ''}" data-id="${item.id}" data-unit="box">caja</div>
+                    `;
+                }
                 
                 const cartItem = document.createElement('div');
                 cartItem.className = 'cart-item';
@@ -1473,8 +1606,7 @@
                             <button class="quantity-btn quantity-increase" data-id="${item.id}" data-unit="${item.unit}">+</button>
                         </div>
                         <div class="unit-selector">
-                            <div class="unit-option ${item.unit === 'kg' ? 'selected' : ''}" data-id="${item.id}" data-unit="kg">kg</div>
-                            <div class="unit-option ${item.unit === 'box' ? 'selected' : ''}" data-id="${item.id}" data-unit="box">caja</div>
+                            ${unitOptions}
                         </div>
                         <div class="cart-item-price">$${itemTotal.toFixed(2)}</div>
                     </div>
@@ -1483,53 +1615,6 @@
                 cartItems.appendChild(cartItem);
             });
             
-            // Agregar event listeners para los botones de eliminar
-            document.querySelectorAll('.cart-item-remove').forEach(button => {
-                button.addEventListener('click', () => {
-                    const productId = button.getAttribute('data-id');
-                    const unit = button.getAttribute('data-unit');
-                    removeFromCart(productId, unit);
-                });
-            });
-            
-            // Agregar event listeners para los botones de cantidad
-            document.querySelectorAll('.quantity-decrease').forEach(button => {
-                button.addEventListener('click', () => {
-                    const productId = button.getAttribute('data-id');
-                    const unit = button.getAttribute('data-unit');
-                    const item = cart.find(i => i.id === productId && i.unit === unit);
-                    if (item) {
-                        updateQuantity(productId, unit, item.quantity - 1);
-                    }
-                });
-            });
-            
-            document.querySelectorAll('.quantity-increase').forEach(button => {
-                button.addEventListener('click', () => {
-                    const productId = button.getAttribute('data-id');
-                    const unit = button.getAttribute('data-unit');
-                    const item = cart.find(i => i.id === productId && i.unit === unit);
-                    if (item) {
-                        updateQuantity(productId, unit, item.quantity + 1);
-                    }
-                });
-            });
-            
-            // Agregar event listeners para las opciones de unidad en el carrito
-            document.querySelectorAll('.cart-item .unit-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    const productId = option.getAttribute('data-id');
-                    const newUnit = option.getAttribute('data-unit');
-                    const oldUnit = option.classList.contains('selected') ? newUnit : 
-                        (newUnit === 'kg' ? 'box' : 'kg');
-                    
-                    if (oldUnit !== newUnit) {
-                        changeUnit(productId, oldUnit, newUnit);
-                    }
-                });
-            });
-            
-            // Actualizar total
             cartTotal.textContent = `$${total.toFixed(2)}`;
         }
         
@@ -1552,18 +1637,15 @@
                 return;
             }
             
-            // Validar formulario con marcado de errores
             if (!validateForm()) {
                 return;
             }
             
-            // Construir dirección completa si no se ha ingresado
             let completeAddress = fullAddress.value.trim();
             if (!completeAddress) {
                 completeAddress = `${street.value} ${extNumber.value} ${intNumber.value ? 'Int ' + intNumber.value : ''}, ${neighborhood.value}, ${city.value}, ${state.value}, CP ${zipCode.value}`;
             }
             
-            // Construir mensaje para WhatsApp
             let message = "Hola, quiero hacer este pedido:\n\n";
             message += `Nombre: ${customerName.value}\n`;
             message += `Teléfono: ${customerPhone.value}\n`;
@@ -1579,27 +1661,33 @@
                 const itemTotal = item.price * item.quantity;
                 total += itemTotal;
                 
-                message += `${item.name}: ${item.quantity} ${item.unit === 'kg' ? 'kg' : 'caja'} x $${item.price.toFixed(2)} = $${itemTotal.toFixed(2)}\n`;
+                let unitText;
+                if (item.unit === 'kg') {
+                    unitText = 'kg';
+                } else if (item.unit === 'box') {
+                    unitText = 'caja';
+                } else if (item.unitType === 'pieza') {
+                    unitText = 'pieza';
+                } else if (item.unitType === 'manojo') {
+                    unitText = 'manojo';
+                } else {
+                    unitText = item.unit;
+                }
+                
+                message += `${item.name}: ${item.quantity} ${unitText} x $${item.price.toFixed(2)} = $${itemTotal.toFixed(2)}\n`;
             });
             
             message += `\nTotal: $${total.toFixed(2)}`;
             
-            // Codificar mensaje para URL
             const encodedMessage = encodeURIComponent(message);
-            
-            // Abrir WhatsApp con el mensaje prellenado
             const whatsappUrl = `https://wa.me/5530528999?text=${encodedMessage}`;
             window.open(whatsappUrl, '_blank');
             
-            // Actualizar estatus del pedido
             orderStatus.textContent = 'Enviado';
             
-            // Vaciar carrito después de realizar el pedido
             setTimeout(() => {
                 cart = [];
                 updateCartUI();
-                
-                // Limpiar formulario
                 customerName.value = '';
                 customerPhone.value = '';
                 fullAddress.value = '';
@@ -1610,46 +1698,24 @@
                 city.value = '';
                 state.value = '';
                 zipCode.value = '';
-                
-                // Eliminar clases de error
                 nameGroup.classList.remove('error');
                 phoneGroup.classList.remove('error');
                 addressGroup.classList.remove('error');
                 streetGroup.classList.remove('error');
-                
-                // Ocultar mapa
                 mapContainer.classList.remove('active');
-                
-                // Cerrar el carrito
                 cartOverlay.classList.remove('active');
-                
-                // Restablecer estatus del pedido
                 orderStatus.textContent = 'Pendiente';
-                
-                // Actualizar fecha
                 updateOrderDate();
-                
-                // Mostrar notificación
                 showNotification('Pedido enviado correctamente');
             }, 2000);
         }
         
         // Inicializar la aplicación cuando el DOM esté completamente cargado
         document.addEventListener('DOMContentLoaded', () => {
-            // Cargar productos desde el Gist
-            fetchProducts();
-            
-            // Configurar event listeners
+            applyAllFilters();
             setupEventListeners();
-            
-            // Actualizar la interfaz del carrito
             updateCartUI();
-            
-            // Actualizar fecha del pedido
             updateOrderDate();
-            
-            // Sincronizar productos cada 30 segundos
-            setInterval(fetchProducts, 30000);
         });
     </script>
 </body>
